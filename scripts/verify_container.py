@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import platform
 import subprocess
 import sys
@@ -114,6 +115,18 @@ def main() -> int:
     print(content)
     if completed and completed.stderr:
         print(completed.stderr, file=sys.stderr)
+    if evidence["status"] != "passed" and os.getenv("GITHUB_ACTIONS"):
+        diagnostic = json.dumps(
+            {
+                "returncode": evidence["container_returncode"],
+                "error": evidence["error"],
+                "stderr": evidence["stderr"],
+                "checks": evidence["checks"],
+            },
+            ensure_ascii=True,
+            separators=(",", ":"),
+        ).replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+        print(f"::error file=scripts/verify_container.py,title=Container smoke failed::{diagnostic}")
     return 0 if evidence["status"] == "passed" else 1
 
 
