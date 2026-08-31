@@ -1,11 +1,11 @@
 {
   "schema_version": 2,
-  "generated_at": "2026-08-31T23:37:02.769575+00:00",
+  "generated_at": "2026-08-31T23:58:14.277748+00:00",
   "python": "3.12.13",
   "framework": {
     "name": "agent-evaluation-framework",
-    "version": "0.4.1",
-    "source_revision": "da1065bd4beb11e397b3ebd9ae37f5e3eada5922",
+    "version": "0.4.2",
+    "source_revision": "5d76a2f9709ee80c9a89ee63c18b0ace9fb12063",
     "source_is_dirty": false
   },
   "platform": {
@@ -18,7 +18,7 @@
   },
   "tests": {
     "status": "passed",
-    "count": 38
+    "count": 39
   },
   "text_evolution": {
     "status": "completed",
