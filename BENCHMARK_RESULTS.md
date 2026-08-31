@@ -26,7 +26,7 @@ python scripts/verify_evidence.py --output evidence/verified-results.json
 
 GitHub Actions 会在 Windows 和 Linux 上执行同一命令，并上传机器可读 JSON。
 
-本次本地 Python 3.12 结果保存在 [evidence/verified-results.json](evidence/verified-results.json)。验证脚本同时记录时间戳、框架版本、Git 提交、工作区是否有未提交改动、运行平台和复现命令。当前目录尚未初始化为 Git 仓库，因此本地结果中的 `source_revision` 和 `source_is_dirty` 为 `null`；仓库建立后，CI 和全新克隆验证会写入实际身份。
+本次本地 Python 3.12 结果保存在 [evidence/verified-results.json](evidence/verified-results.json)。验证脚本同时记录时间戳、框架版本、Git 提交、工作区是否有未提交改动、运行平台和复现命令。仓库内提交的结果绑定框架提交 `673103e1b185b10029ce9570e78ce99d970472c2`，并记录 `source_is_dirty=false`。之后又从公开仓库提交 `a2aa0aa9e646e1619ac75150bfcde326fa282abd` 完成全新克隆复现；当前 `main` 的 GitHub Actions 继续在 Windows 和 Linux 上运行同一验证脚本并保存对应提交的产物。
 
 每套数据保留两种身份。`source_file_sha256` 是原始 JSONL 文件的逐字节哈希，`normalized_case_manifest.sha256` 是框架解析并规范化 case 后的清单哈希。两者用途不同，数值不应相同。前者证明输入文件没有替换，后者证明恢复和候选比较使用相同的规范化测试内容。
 
@@ -48,7 +48,7 @@ GitHub Actions 会在 Windows 和 Linux 上执行同一命令，并上传机器�
 | 单机并发完整性 | 1、8、32 workers 各 1000 case，均为 1000 个唯一结果、0 个硬失败，10 次瞬态失败全部恢复 | 有界线程并发下未发现 case 丢失或重复，失败重试结果可审计 |
 | 并发故障记账与恢复 | 5 个永久失败均被记录；500 → 1000 case 恢复后得到 1000 个唯一结果；两个进程写入 50 个不同运行无丢失 | 永久错误不会被吞掉，分段恢复和 SQLite 多写者保持记录完整性 |
 
-首次演示中，健康助手候选在 improvement 和 holdout 上的平均延迟分别增加约 3.36 秒和 2.19 秒。本次机制测试没有业务延迟阈值，因此延迟被记录但未阻断候选。这个不利结果必须与通过率一起公开。
+首次演示中，健康助手候选在 improvement 和 holdout 上的平均延迟分别增加约 3.36 秒和 2.19 秒。本次机制测试没有预注册业务延迟阈值，因此延迟被记录但未阻断候选。框架当前已经支持将 `latency_ms` 配置为最小化目标并设置最大允许退化，业务接入协议也要求 M3/M4 在运行前冻结延迟门禁。这组数字保留为历史实验事实，不代表当前框架无法阻止延迟退化。
 
 3 次重复实验全部按计划保留，未补跑或筛掉失败结果。严格按完整闭环是否接受候选计算，接受率为 1/3。第 1 次重复把 improvement 从 25% 提升到 100%、regression 保持 100%、holdout 从 75% 提升到 100%，并被接受；第 2 次在诊断阶段因模型未返回合法 JSON 而失败；第 3 次生成两个内容相同的候选，两者虽然提高硬通过率，但都使 holdout 软告警从 0 增至 1，因此被确定性门禁回滚。首次演示加 3 次重复共 4 次运行，其中 2 次接受，但首次演示不属于预注册重复，不与 1/3 混为同一统计口径。
 
@@ -64,7 +64,7 @@ Windows 11、Python 3.12.13 的无密钥合成压力结果保存在 [evidence/co
 | 8 | 530.52 case/s | 2.21 ms | 10,055,181 bytes |
 | 32 | 512.65 case/s | 2.67 ms | 10,163,531 bytes |
 
-这组吞吐量是一次本机运行快照，会随调度和机器负载变化，不能作为稳定性能指标。本次 8 workers 吞吐量最高，32 workers 没有继续提高，说明并发必须由适配器按真实工作负载限制，不能默认 workers 越大越好。加入 workers 两倍的有界在途窗口后，1000-case traced memory 保持在约 10 MB。当前证据支持单机共享状态完整性，不支持生产吞吐量或长期资源稳定性结论。
+这组吞吐量是一次本机运行快照，会随调度和机器负载变化，不能作为生产容量指标。合成 Agent 每次只休眠约 1 毫秒，主要测量线程调度、规则计算和 SQLite 写入开销；8 workers 后已经进入本机开销饱和区，因此 32 workers 的瞬时吞吐没有继续上升。这不是稳定性失败：三个档位都得到 1000 个唯一结果、0 个硬失败，瞬态失败也全部恢复。加入 workers 两倍的有界在途窗口后，1000-case traced memory 保持在约 10 MB。当前证据支持单机有界并发下的共享状态完整性；真实 HTTP Agent 的容量上限仍需由接入方按自身延迟、限流和 SLO 执行 M4 压测。
 
 ## 评测 Skill 专项证据
 
@@ -84,7 +84,7 @@ REVIEW-007 和 REVIEW-008 都经历了“首次判断为正确、复核后裁决
 
 本次候选由确定性参考生成器提供，用于验证人工审核数据确实参与修改、回归与留出门禁。它不等同于 AI 自主发现了这些规则，也不证明 10 条合成案例足以代表真实业务分布。
 
-重复实验中的延迟变化也未统一朝好方向移动。被接受的候选使 improvement 平均延迟降低 4.86 秒，但 regression 和 holdout 分别增加约 0.77 秒和 0.87 秒；被回滚候选使 improvement 增加约 2.42 秒、regression 增加约 0.04 秒、holdout 降低约 0.53 秒。当前结果说明延迟需要由业务方设定明确门槛，而不能靠框架自动猜测。
+重复实验中的延迟变化没有统一方向。被接受的候选使 improvement 平均延迟降低 4.86 秒，但 regression 和 holdout 分别增加约 0.77 秒和 0.87 秒；被回滚候选使 improvement 增加约 2.42 秒、regression 增加约 0.04 秒、holdout 降低约 0.53 秒。这些历史运行没有预注册业务延迟门禁。当前框架可用 `latency_ms` 数值目标阻断超过业务容忍范围的候选，但阈值必须由业务方在运行前给出，框架不会替不同业务猜测统一上限。
 
 健康助手首次演示的精简机器摘要见 [evidence/ai-health-prompt-evolution-summary.json](evidence/ai-health-prompt-evolution-summary.json)，3 次重复的完整汇总见 [evidence/ai-health-repeat-results.json](evidence/ai-health-repeat-results.json)，AI 生成并被首次演示门禁接受的候选见 [evidence/ai-health-accepted-planner.prompt.txt](evidence/ai-health-accepted-planner.prompt.txt)。候选仅作为实验审计证据，不代表推荐直接用于生产。
 
@@ -94,7 +94,7 @@ REVIEW-007 和 REVIEW-008 都经历了“首次判断为正确、复核后裁决
 - 评测 Skill 专项数据也是合成人工审核历史，不代表已经积累真实审核报告。
 - 健康助手实验属于真实系统集成验证，不属于医疗业务效果验证。
 - 当前共有一次首次演示、3 次预注册重复和一次可追溯重跑。预注册重复样本仍然很小，1/3 只能描述那三次实验，不能外推为通用稳定成功率。
-- AI 候选生成具有随机性，且本次出现诊断 JSON 协议失败与重复候选，说明 AI 协议健壮性和候选多样性仍需改进。
+- AI 候选生成具有随机性。历史运行出现过诊断 JSON 协议失败与重复候选；框架随后增加了通用 JSON 边界提取和一次受预算约束的协议重试，并继续用最小改进、回归和 holdout 门禁拒绝无效或重复修改。候选多样性仍取决于外部 Evolver，不作为框架正确性的前提。
 - 单文件代码候选具备进程生命周期隔离，但不是防恶意代码的安全沙箱。
 - 多文件仓库快照、构建缓存和容器级隔离不属于当前文本型 Prompt / Skill Beta 的成立条件。
 
