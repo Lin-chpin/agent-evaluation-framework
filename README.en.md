@@ -154,7 +154,7 @@ The loop atomically writes `.agent-eval/workspaces/<loop-id>/checkpoint.json`. A
 
 ### Code Agents
 
-Code candidates use `change_type: code`, and a domain adapter may launch them with `run_agent_process`. Candidate files remain in a separate working directory. Directory candidates may modify several declared files; escaping relative paths are rejected before any write, and rolled-back candidates never overwrite the baseline directory. The runner captures stdout and stderr, applies the explicit working directory, and terminates the process tree after a timeout.
+Code candidates use `change_type: code`, and a domain adapter may launch them with `run_agent_process`. Candidate files remain in a separate working directory. Directory candidates may modify several declared files; escaping relative paths are rejected before any write, and rolled-back candidates never overwrite the baseline directory. The runner captures stdout and stderr, applies the explicit working directory, and terminates the process tree after a timeout. Each output stream returns at most 1 MiB by default and receives a truncation marker when the child produces more; adapters can change the limit with `max_output_bytes`.
 
 ```powershell
 agent-eval evolve-auto `

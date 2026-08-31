@@ -154,7 +154,7 @@ agent-eval evolve-auto `
 
 ### 代码型 Agent
 
-代码候选可以把 `change_type` 设为 `code`，并由领域适配器使用 `run_agent_process` 启动。候选文件仍由 `TextArtifactWorkspace` 放进独立目录，进程以该目录为工作目录运行，超时会终止进程树并保留 stdout/stderr。目录候选可以同时修改多个声明文件；越界相对路径会在写入前被拒绝，回滚候选不会覆盖基线目录。
+代码候选可以把 `change_type` 设为 `code`，并由领域适配器使用 `run_agent_process` 启动。候选文件仍由 `TextArtifactWorkspace` 放进独立目录，进程以该目录为工作目录运行，超时会终止进程树并保留 stdout/stderr。每个输出流默认最多读回 1 MiB，超出部分用截断标记代替，也可以通过 `max_output_bytes` 调整。目录候选可以同时修改多个声明文件；越界相对路径会在写入前被拒绝，回滚候选不会覆盖基线目录。
 
 ```powershell
 agent-eval evolve-auto `

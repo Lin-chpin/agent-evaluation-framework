@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "agent-evaluation-framework"
-version = "0.4.1"
+version = "0.4.2"
 description = "Pluggable Agent evaluation, diagnosis, review, and regression workflow"
 requires-python = ">=3.11"
 license = { file = "LICENSE" }
