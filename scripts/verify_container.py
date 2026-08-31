@@ -64,20 +64,24 @@ def main() -> int:
 
     source_revision = git_value("rev-parse", "HEAD")
     source_status = git_value("status", "--porcelain")
-    with tempfile.TemporaryDirectory() as directory:
-        workspace = Path(directory)
-        (workspace / "probe.txt").write_text("probe", encoding="utf-8")
-        completed = run_agent_container(
-            args.image,
-            ["python", "-c", PROBE],
-            workspace,
-            engine=args.engine,
-            timeout_seconds=30,
-        )
-
     checks = {}
-    if completed.stdout.strip():
-        checks = json.loads(completed.stdout.strip().splitlines()[-1])
+    completed: subprocess.CompletedProcess[str] | None = None
+    error: str | None = None
+    try:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory)
+            (workspace / "probe.txt").write_text("probe", encoding="utf-8")
+            completed = run_agent_container(
+                args.image,
+                ["python", "-c", PROBE],
+                workspace,
+                engine=args.engine,
+                timeout_seconds=30,
+            )
+        if completed.stdout.strip():
+            checks = json.loads(completed.stdout.strip().splitlines()[-1])
+    except Exception as exception:
+        error = f"{type(exception).__name__}: {exception}"
     image = subprocess.run(
         [args.engine, "image", "inspect", args.image, "--format", "{{json .RepoDigests}}"],
         capture_output=True,
@@ -94,16 +98,21 @@ def main() -> int:
         "image_repo_digests": image.stdout.strip() if image.returncode == 0 else None,
         "source_revision": source_revision,
         "source_is_dirty": bool(source_status) if source_status is not None else None,
-        "container_returncode": completed.returncode,
+        "container_returncode": completed.returncode if completed else None,
+        "stdout": completed.stdout if completed else "",
+        "stderr": completed.stderr if completed else "",
+        "error": error,
         "checks": checks,
-        "status": "passed" if completed.returncode == 0 and checks and all(checks.values()) else "failed",
+        "status": "passed"
+        if completed and completed.returncode == 0 and checks and all(checks.values())
+        else "failed",
     }
     content = json.dumps(evidence, ensure_ascii=False, indent=2)
     if args.output:
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(content + "\n", encoding="utf-8")
     print(content)
-    if completed.stderr:
+    if completed and completed.stderr:
         print(completed.stderr, file=sys.stderr)
     return 0 if evidence["status"] == "passed" else 1
 

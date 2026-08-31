@@ -40,7 +40,16 @@ jobs:
           python-version: "3.12"
       - run: python -m pip install -e .
       - run: python scripts/verify_container.py --output container-smoke.json
+      - if: always()
+        run: |
+          if [ -f container-smoke.json ]; then
+            echo '## Container smoke evidence' >> "$GITHUB_STEP_SUMMARY"
+            echo '```json' >> "$GITHUB_STEP_SUMMARY"
+            cat container-smoke.json >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+          fi
       - uses: actions/upload-artifact@v7
+        if: always()
         with:
           name: container-smoke
           path: container-smoke.json
