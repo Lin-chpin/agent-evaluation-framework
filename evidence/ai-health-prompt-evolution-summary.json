@@ -1,67 +1,28 @@
 {
-  "schema_version": 1,
-  "experiment_id": "ai-health-planner-evolution-20260830-v2",
+  "schema_version": 2,
   "date": "2026-08-30",
-  "purpose": "controlled mechanism and real-system integration test",
-  "external_system": "ai-health-assistant",
-  "historical_reproducibility": {
-    "public_summary": true,
-    "full_audit_public": false,
-    "source_revision_recorded_at_run": false,
-    "target_artifact_sha256_recorded_at_run": false,
-    "bit_for_bit_external_reproduction": false
-  },
+  "publication_scope": "aggregate result from a private external reference Agent",
   "data": {
     "kind": "synthetic cases",
-    "real_patient_data": false,
+    "real_business_data": false,
     "improvement_cases": 4,
     "regression_cases": 8,
     "holdout_cases": 8
   },
   "evolver": {
-    "provider_interface": "SiliconFlow OpenAI-compatible API",
     "model": "Qwen/Qwen3-14B",
     "diagnosis_calls": 1,
     "candidate_generation_calls": 1
   },
   "result": {
     "decision": "accept",
-    "initial_version": "defect-v1",
-    "candidate_version": "ai-r1-c1-92f1e5",
-    "improvement": {
-      "baseline_hard_pass_rate": 0.25,
-      "candidate_hard_pass_rate": 1.0,
-      "baseline_soft_warnings": 1,
-      "candidate_soft_warnings": 0,
-      "mean_latency_ms_delta": 3356.0
-    },
-    "regression": {
-      "baseline_hard_pass_rate": 1.0,
-      "candidate_hard_pass_rate": 1.0,
-      "baseline_soft_warnings": 0,
-      "candidate_soft_warnings": 0,
-      "mean_latency_ms_delta": -1.0
-    },
-    "holdout": {
-      "baseline_hard_pass_rate": 0.75,
-      "candidate_hard_pass_rate": 1.0,
-      "baseline_soft_warnings": 2,
-      "candidate_soft_warnings": 0,
-      "mean_latency_ms_delta": 2189.625
-    }
+    "improvement": {"baseline_hard_pass_rate": 0.25, "candidate_hard_pass_rate": 1.0},
+    "regression": {"baseline_hard_pass_rate": 1.0, "candidate_hard_pass_rate": 1.0},
+    "holdout": {"baseline_hard_pass_rate": 0.75, "candidate_hard_pass_rate": 1.0}
   },
-  "sha256": {
-    "full_local_audit": "1CE26D3B2ABDD29405A2F7FC9BB2217EAB151FAB1D21687EF69552076F873618",
-    "accepted_prompt_original_artifact": "B37569FC413242A7E1F578F3F9C7C4572B613E5A97D79E09B8499691E0273E16",
-    "accepted_prompt_evidence_copy": "4D9F56103D2C0AABC7A54F9F13932B408AB42AFCB6BAAE0BCC965F34D31D355A",
-    "improvement_dataset": "967B5971C59D3A73650C29274A09D3E851974283F6BBEF6B76D46371570A1DC3",
-    "regression_dataset": "E05187E2364A3366C68E6139FE123ED3A0AF68ECC1EC37AC2797DEA129DF7EB5",
-    "holdout_dataset": "17F91CD20D5033BAA03787DF4E87112B1A7AD7126C12301480EE2180213ED5B8"
-  },
-  "limitations": [
-    "This is one successful AI-assisted run, not a reliability estimate.",
-    "The cases are synthetic and do not validate medical business outcomes.",
-    "The candidate increased mean latency on improvement and holdout.",
-    "The accepted prompt is evidence of the run, not a production recommendation."
+  "boundaries": [
+    "The external system source, Prompt, cases, adapter, commands, and internal reports are private.",
+    "This result supplements the public deterministic mechanism evidence and is not independently executable from this repository.",
+    "The result does not establish business outcomes or predict results for another system."
   ]
 }

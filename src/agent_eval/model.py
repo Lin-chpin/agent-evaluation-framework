@@ -159,6 +159,7 @@ class TextCandidate:
     summary: str
     change_type: str = "skill"
     metadata: Mapping[str, Any] = field(default_factory=dict)
+    files: Mapping[str, str] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -181,8 +182,9 @@ class RetryableEvolverError(ValueError):
     """The evolver response was unusable, but repeating the call may recover."""
 
 
+ArtifactContent = str | Mapping[str, str]
 Diagnoser = Callable[[Mapping[str, Any]], EvolutionDiagnosis]
-CandidateGenerator = Callable[[EvolutionDiagnosis, str, int], Sequence[TextCandidate]]
+CandidateGenerator = Callable[[EvolutionDiagnosis, ArtifactContent, int], Sequence[TextCandidate]]
 AdapterBuilder = Callable[[Path, str], ProjectAdapter]
 
 

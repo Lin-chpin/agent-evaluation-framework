@@ -10,6 +10,6 @@ Include the affected version, reproduction conditions, impact, and minimal repro
 
 ## Security boundary
 
-The text workspace and subprocess isolation protect domain-project files from accidental candidate changes. They are not a security sandbox for hostile code. Integrations that run untrusted candidates must use a container, virtual machine, or restricted execution service.
+The text workspace and subprocess isolation protect domain-project files from accidental candidate changes. The optional `run_agent_container` disables networking by default, mounts the candidate workspace read-only, uses a read-only container filesystem, drops capabilities, and limits CPU, memory, and PIDs. Container isolation still depends on Docker or Podman and the host configuration. High-risk candidates should use a hardened container, virtual machine, or restricted execution service.
 
 Project and auto-evolution adapters are imported as Python modules and have code-execution privileges in the current process. Load trusted adapter files only. Traces, model inputs, and candidate artifacts may contain business data, so the integrating project must redact and control access before writing reports or sending content to a model.

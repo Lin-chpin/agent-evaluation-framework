@@ -23,7 +23,7 @@ from .model import (
     to_jsonable,
 )
 from .store import ResultStore
-from .workspace import TextArtifactWorkspace, safe_name
+from .workspace import TextArtifactWorkspace, read_artifact, safe_name
 
 
 class _TimeBudgetExhausted(Exception):
@@ -119,8 +119,8 @@ class AutoEvolutionLoop:
         safe_name(candidate.candidate_version, "candidate_version")
         if candidate.candidate_version == baseline_version:
             raise ValueError("candidate version must differ from baseline version")
-        if not candidate.content.strip():
-            raise ValueError("candidate content must not be empty")
+        if not candidate.content.strip() and not candidate.files:
+            raise ValueError("candidate content or files must not be empty")
 
     def run(
         self,
@@ -152,7 +152,7 @@ class AutoEvolutionLoop:
         missing = required.difference(datasets)
         if missing or any(not datasets.get(role) for role in required):
             raise ValueError("automatic evolution requires non-empty improvement, regression, and holdout datasets")
-        if not adapter.baseline_artifact.is_file():
+        if not adapter.baseline_artifact.exists():
             raise ValueError(f"baseline artifact does not exist: {adapter.baseline_artifact}")
 
         budget = budget or EvolutionBudget()
@@ -175,7 +175,7 @@ class AutoEvolutionLoop:
             if checkpoint.get("status") == "completed":
                 return checkpoint
             current_path = Path(checkpoint["current_artifact"])
-            if not current_path.is_file():
+            if not current_path.exists():
                 raise FileNotFoundError(f"checkpoint artifact does not exist: {current_path}")
             current_version = str(checkpoint["current_version"])
             rounds = list(checkpoint.get("rounds", []))
@@ -287,7 +287,7 @@ class AutoEvolutionLoop:
                     invoke_evolver(
                         lambda: adapter.generate_candidates(
                             diagnosis,
-                            current_path.read_text(encoding="utf-8"),
+                            read_artifact(current_path),
                             round_number,
                         )
                     )
@@ -314,6 +314,7 @@ class AutoEvolutionLoop:
                         round_number,
                         candidate,
                         adapter.baseline_artifact.name,
+                        current_path,
                     )
                     change = EvolutionCandidate(
                         candidate.candidate_id,

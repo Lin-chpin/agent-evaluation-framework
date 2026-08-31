@@ -16,6 +16,7 @@ from .model import (
     TraceEvent,
 )
 from .llm import OpenAICompatibleTextEvolver
+from .container_runner import build_container_command, run_agent_container
 from .process import run_agent_process
 
 __all__ = [
@@ -36,4 +37,6 @@ __all__ = [
     "TextCandidate",
     "TraceEvent",
     "run_agent_process",
+    "build_container_command",
+    "run_agent_container",
 ]

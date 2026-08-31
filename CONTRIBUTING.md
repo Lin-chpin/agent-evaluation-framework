@@ -17,6 +17,8 @@
 python -m pip install -e .
 python -m unittest discover -s tests -v
 python scripts/verify_evidence.py --output evidence/verified-results.json
+python scripts/verify_concurrency.py --output evidence/concurrency-results.json
+python scripts/verify_soak.py --duration-seconds 10 --output evidence/soak-results.json
 ```
 
 提交贡献即表示你有权提供相关内容，并同意贡献内容按照仓库的 [PolyForm Noncommercial License 1.0.0](LICENSE) 发布。贡献不会自动获得商业使用授权。

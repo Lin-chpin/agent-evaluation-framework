@@ -26,7 +26,7 @@ It performs five checks.
 
 GitHub Actions runs the same command on Windows and Linux and uploads the machine-readable JSON result.
 
-The local Python 3.12 result is stored in [evidence/verified-results.json](evidence/verified-results.json). The script records the timestamp, framework version, Git revision, dirty-worktree state, runtime platform, and reproduction command. The committed result is bound to framework revision `673103e1b185b10029ce9570e78ce99d970472c2` with `source_is_dirty=false`. A later clean-clone reproduction was completed from public revision `a2aa0aa9e646e1619ac75150bfcde326fa282abd`. GitHub Actions on the current `main` branch continues to run the same script on Windows and Linux and stores artifacts for the corresponding revision.
+The local Python 3.12 result is stored in [evidence/verified-results.json](evidence/verified-results.json). The script records the timestamp, framework version, Git revision, dirty-worktree state, runtime platform, and reproduction command. The evidence file itself records the exact revision and worktree state it belongs to, so commit identifiers do not go stale in the surrounding documentation. GitHub Actions on the current `main` branch continues to run the same script on Windows and Linux and stores artifacts for the corresponding revision.
 
 Each dataset has two identities. `source_file_sha256` is the byte-level hash of the original JSONL file. `normalized_case_manifest.sha256` hashes the cases after framework parsing and normalization. The values serve different purposes and are not expected to match. The first detects replacement of the input file, while the second binds resume and candidate comparison to the same normalized test content.
 
@@ -34,25 +34,20 @@ Each dataset has two identities. `source_file_sha256` is the byte-level hash of 
 
 | Evidence | Result | What it supports |
 | --- | --- | --- |
-| Automated tests | 33/33 passed | Current tests cover rules, evolution decisions, independent scenario gates, strict holdout gating, continued multi-round improvement, frozen-dataset resume checks, budgets, recovery, LLM JSON boundaries, candidate-evidence isolation, Gold adjudication, evaluator metrics, cross-process locking, concurrent SQLite writers, the health integration contract, and process timeout behavior. |
+| Automated tests | 33/33 passed | Current tests cover rules, evolution decisions, independent scenario gates, strict holdout gating, continued multi-round improvement, frozen-dataset resume checks, budgets, recovery, LLM JSON boundaries, candidate-evidence isolation, Gold adjudication, evaluator metrics, cross-process locking, concurrent SQLite writers, multi-file rollback, container security defaults, and process timeout behavior. |
 | Deterministic text evolution | Harmful candidate rolled back; safe candidate accepted | Three-set gating blocks a candidate that damages holdout while preserving a safe improvement. |
-| Code Agent evolution | Harmful code rolled back; safe code accepted | A single-file code candidate can enter the same loop from an isolated directory and process. |
+| Code Agent evolution | Harmful code rolled back; safe code accepted | Single-file and multi-file directory candidates can enter the same loop without rollback overwriting the baseline. |
 | Evaluator-Skill evolution | Harmful candidate rolled back; safe candidate accepted. Improvement 0% to 100%, regression 100% to 100%, holdout 0% to 100%. | Simulated review reports can drive a controlled evaluator-Skill replay across improvement, regression, and holdout. |
 | Human-reviewed evaluator-Skill evolution | 10/10 reviewed; both reference candidates rolled back. Better candidate moved improvement 0% to 100%, regression 100% to 100%, holdout 25% to 75%. | Human decisions can drive changes and gates. A strict policy still blocks a clearly improved candidate while any holdout error remains. |
 | Repeated 14B evaluator-Skill scoring | 10 cases across 5 rounds; 50/50 calls succeeded. Original-Gold agreement was 90% per round and repeat stability was 100%. Agreement became 100% after REVIEW-008 adjudication. | The fixed Skill and model configuration was stable on this sample. Gold adjudication and model stability must be reported separately. |
 | 14B AI evaluator-Skill evolution | The AI diagnosed two bad cases correctly but returned a candidate identical to the baseline. All three sets remained unchanged and the candidate was rejected. | An ineffective AI-generated change receives no special treatment. The minimum-improvement gate blocks it. |
-| Native health-assistant smoke suite | 20/20 passed with no hard failure or soft warning | The framework can connect to a real Agent orchestrator, its native evaluation endpoint, and real traces. |
-| First health-assistant AI Prompt demonstration | Improvement 25% to 100%, regression 100% to 100%, holdout 75% to 100% | An AI can use failed traces to produce a Prompt candidate that passes the predefined gates. |
-| Three preregistered independent repeats | One accepted run, one diagnosis JSON failure, and one run where both candidates were rolled back by holdout | The loop can accept a valid change and block protected-set regressions. The AI protocol layer remains unstable. |
-| Traceable health-assistant rerun | Framework and target commits, dirty states, JAR and dataset hashes were recorded before execution. Candidate one rolled back and candidate two was accepted. | A reference integration can bind its result to the executed artifact while preserving both failed and accepted candidates from the same run. |
+| Private external-system smoke suite | 20/20 passed with no hard failure or soft warning | The framework can connect to a real Agent orchestrator, its native evaluation endpoint, and real traces. |
+| Private external-system Prompt evolution | Improvement 25% to 100%, regression 100% to 100%, holdout 75% to 100% | An AI can use failed traces to produce a Prompt candidate that passes predefined gates. |
+| Three independent repeats | The runs ended in acceptance, external-generation failure, and holdout rollback | Different external Evolver outcomes enter the same audit, stop, and gate flow. |
+| Traceable private-system rerun | Framework, target, executed-artifact, and dataset identities were recorded before execution. Candidate one rolled back and candidate two was accepted. | The result is bound to the executed identity while preserving rollback and acceptance decisions from the same run. |
 | Single-machine concurrency integrity | 1, 8, and 32 workers each processed 1,000 cases with 1,000 unique results, no hard failure, and recovery from all 10 transient failures | Bounded threaded concurrency did not lose or duplicate cases, and retry outcomes remained auditable. |
 | Failure accounting and resume | All five permanent failures were recorded. Resuming from 500 to 1,000 cases produced 1,000 unique results. Two processes wrote 50 separate runs without loss. | Permanent errors are not swallowed. Staged resume and concurrent SQLite writers preserve record integrity. |
-
-In the first health-assistant demonstration, average candidate latency increased by about 3.36 seconds on improvement and 2.19 seconds on holdout. That mechanism test did not preregister a business latency threshold, so the framework recorded the increase without blocking the candidate. The current framework supports a minimizing `latency_ms` objective with a maximum allowed regression, and the acceptance protocol requires M3/M4 integrations to freeze latency gates before execution. The numbers remain as historical experiment facts; they do not mean that the current framework cannot block latency regressions.
-
-All three repeat experiments were kept as planned. No failed run was replaced or filtered out. Under the strict definition that a run succeeds only when the complete loop accepts a candidate, the repeat acceptance rate was 1/3. Repeat 1 improved improvement from 25% to 100%, kept regression at 100%, improved holdout from 75% to 100%, and was accepted. Repeat 2 failed because diagnosis did not return valid JSON. Repeat 3 generated two identical candidates. Both improved hard-pass rates but raised holdout soft warnings from zero to one, so deterministic gates rolled them back. The original demonstration and the three preregistered repeats produced two accepted runs out of four, but the original demonstration is not part of the 1/3 repeat statistic.
-
-After the second repeat failed, the framework added general LLM JSON-boundary handling and one budgeted protocol retry. Historical results and hashes remain unchanged. The updated implementation did not retroactively replace the failed result.
+| Short soak | 10 seconds, 51 consecutive batches, 5,100 cases, no failure, and one thread both before and after | Results remain complete across repeated runs and worker threads are reclaimed after each batch. |
 
 ## Single-machine concurrency baseline
 
@@ -65,6 +60,8 @@ The keyless synthetic stress results were collected on Windows 11 with Python 3.
 | 32 | 512.65 cases/s | 2.67 ms | 10,163,531 bytes |
 
 These throughput values are a snapshot from one local run and are not production capacity targets. The synthetic Agent sleeps for only about one millisecond per call, so this profile mostly measures thread scheduling, rule evaluation, and SQLite write overhead. The host reached overhead saturation after eight workers, so instantaneous throughput did not keep rising at 32 workers. This was not a stability failure: every profile produced 1,000 unique results, no hard failure, and complete transient-failure recovery. A bounded in-flight window of twice the worker count kept traced memory for 1,000 cases near 10 MB. The evidence supports shared-state integrity under bounded single-machine concurrency. Capacity for a real HTTP Agent still requires an M4 test against its own latency, rate limits, and SLOs.
+
+The short repeated-run result is stored in [evidence/soak-results.json](evidence/soak-results.json). It completed 51 batches and 5,100 cases in ten seconds with no failure. Thread count was one both before and after, and peak Python traced memory was about 2.48 MB.
 
 ## Evaluator-Skill evidence
 
@@ -84,23 +81,19 @@ A separate stability experiment froze a manually written evaluator Skill, `Qwen/
 
 The deterministic reference generator supplied the candidates used to verify that human-reviewed data actually controls modification, regression, and holdout gates. It does not show that an AI independently discovered those rules, or that ten synthetic cases represent a real business distribution.
 
-Latency did not move in one consistent direction across repeat experiments. The accepted candidate reduced average improvement latency by about 4.86 seconds but increased regression and holdout latency by about 0.77 and 0.87 seconds. A rolled-back candidate increased improvement and regression latency by about 2.42 and 0.04 seconds while reducing holdout latency by about 0.53 seconds. Those historical runs did not preregister a business latency gate. The current framework can block candidates through a `latency_ms` objective, but the domain owner must define the acceptable regression before execution rather than relying on one universal threshold.
-
-The compact first-demonstration summary is stored in [evidence/ai-health-prompt-evolution-summary.json](evidence/ai-health-prompt-evolution-summary.json). The three-repeat summary is in [evidence/ai-health-repeat-results.json](evidence/ai-health-repeat-results.json). The AI-generated candidate accepted by the first demonstration is in [evidence/ai-health-accepted-planner.prompt.txt](evidence/ai-health-accepted-planner.prompt.txt). The candidate is preserved as experimental audit evidence and is not a production recommendation.
+Aggregate results for the private external reference system are available in the [first-run summary](evidence/ai-health-prompt-evolution-summary.json), [three-repeat summary](evidence/ai-health-repeat-results.json), and [traceable-rerun summary](evidence/ai-health-provenance-rerun-summary.json). The repository does not distribute that system's source, Prompt, business cases, adapter, or internal reports.
 
 ## Data and experimental boundaries
 
-- The health assistant uses synthetic cases, not real patient data or production bad cases.
+- The private external reference system uses synthetic cases, not real business data or production bad cases.
 - Evaluator-Skill data also represents synthetic human-review history, not an accumulated production review set.
-- The health-assistant experiment validates real system integration. It does not validate clinical outcomes.
-- The project has one original demonstration, three preregistered repeats, and one traceable rerun. The preregistered sample remains small. Its 1/3 acceptance rate describes only those three runs and cannot be generalized into a stable success rate.
-- AI candidate generation is stochastic. Historical runs produced a diagnosis JSON failure and duplicate candidates. The framework subsequently added general JSON-boundary extraction and one budgeted protocol retry, while minimum-improvement, regression, and holdout gates continue to reject ineffective or duplicate changes. Candidate diversity remains an external Evolver property and is not assumed by framework correctness.
-- Single-file code candidates have process-lifecycle isolation, not a security sandbox for hostile code.
-- Multi-file repository snapshots, build caches, and container isolation are outside the acceptance criteria for the current text Prompt and Skill Beta.
+- The private external experiment validates real system integration, not business outcomes, and does not predict success for another system.
+- AI candidate generation is stochastic. Structure boundaries, budgets, minimum improvement, regression, and holdout gates handle external Evolver results.
+- Multi-file snapshots and a container runner are implemented. Build caching and multi-hour soak remain demand-driven extensions.
 
 ## Why the experiments use a 14B model
 
-AI-assisted mechanism experiments intentionally use `Qwen/Qwen3-14B`. The project measures whether candidate changes can be isolated, reevaluated, accepted, or rolled back. It does not benchmark foundation-model capability. Invalid JSON, duplicate candidates, and incorrect edits from a smaller model are normal inputs that the framework must handle. They provide useful evidence for protocol retries, regression protection, and holdout gates.
+AI-assisted mechanism experiments intentionally use `Qwen/Qwen3-14B`. The project measures whether candidate changes can be isolated, reevaluated, accepted, or rolled back. It does not benchmark foundation-model capability. Invalid or incorrect output from a smaller model is a normal input handled through structure boundaries, regression protection, and holdout gates.
 
 The 14B results do not represent a model capability ceiling and are not combined with results from larger models on different tasks. A stronger model may produce useful candidates more often, but it does not change hard gates, human Gold, or dataset isolation. A future model-size comparison would use the same task, baseline, frozen data, budget, and repeat count. It would not rewrite the current evidence.
 
@@ -112,11 +105,9 @@ In the evaluator-Skill AI evolution experiment on August 31, 2026, the 14B model
 
 The keyless deterministic flow and automated tests establish mechanism behavior. Any contributor can reproduce them locally or in CI.
 
-### Real system integration
+### Private real-system integration
 
-The AI Health Assistant JAR, HTTP interface, Prompt version registration, and trace results establish integration with a working system. This experiment requires the external project, Java environment, and model service, so it is not part of the public keyless CI.
-
-The repository includes the [native smoke report](evidence/ai-health-native-smoke-report.md), the [state-pollution report](evidence/ai-health-chat-state-pollution-report.md), the Prompt-evolution summary, and the three-repeat summary. The [traceable rerun](evidence/ai-health-provenance-rerun-summary.json) recorded framework and target commits, dirty-worktree states, the executed JAR SHA-256, Java and model configuration, dataset hashes, and the complete command before execution. The target worktree was dirty, so its commit alone cannot reconstruct the source tree; the JAR hash binds the executed artifact. Historical runs retain their original identity and are not backfilled.
+Aggregate results show that the framework used a real interface, version switching, and traces from an external Agent system. That project is not distributed with this repository, so these results are supplementary integration records rather than the public reproducibility basis for framework mechanics. They do not predict outcomes for another business system.
 
 ### Business outcomes
 

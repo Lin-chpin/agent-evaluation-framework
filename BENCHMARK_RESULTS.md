@@ -26,7 +26,7 @@ python scripts/verify_evidence.py --output evidence/verified-results.json
 
 GitHub Actions 会在 Windows 和 Linux 上执行同一命令，并上传机器可读 JSON。
 
-本次本地 Python 3.12 结果保存在 [evidence/verified-results.json](evidence/verified-results.json)。验证脚本同时记录时间戳、框架版本、Git 提交、工作区是否有未提交改动、运行平台和复现命令。仓库内提交的结果绑定框架提交 `673103e1b185b10029ce9570e78ce99d970472c2`，并记录 `source_is_dirty=false`。之后又从公开仓库提交 `a2aa0aa9e646e1619ac75150bfcde326fa282abd` 完成全新克隆复现；当前 `main` 的 GitHub Actions 继续在 Windows 和 Linux 上运行同一验证脚本并保存对应提交的产物。
+本次本地 Python 3.12 结果保存在 [evidence/verified-results.json](evidence/verified-results.json)。验证脚本同时记录时间戳、框架版本、Git 提交、工作区是否有未提交改动、运行平台和复现命令。该证据文件直接记录其对应的精确提交和工作区状态，避免文档中的提交号随版本更新而失效。当前 `main` 的 GitHub Actions 继续在 Windows 和 Linux 上运行同一验证脚本并保存对应提交的产物。
 
 每套数据保留两种身份。`source_file_sha256` 是原始 JSONL 文件的逐字节哈希，`normalized_case_manifest.sha256` 是框架解析并规范化 case 后的清单哈希。两者用途不同，数值不应相同。前者证明输入文件没有替换，后者证明恢复和候选比较使用相同的规范化测试内容。
 
@@ -34,25 +34,20 @@ GitHub Actions 会在 Windows 和 Linux 上执行同一命令，并上传机器�
 
 | 证据 | 结果 | 能证明什么 |
 | --- | --- | --- |
-| 自动化测试 | 33/33 通过 | 规则、演化决策、场景独立门禁、严格 holdout 门禁、多轮继续、冻结数据恢复校验、预算、恢复、LLM JSON 边界、候选证据隔离、Gold 复核、评测指标、跨进程互斥、SQLite 多写者、健康集成契约和进程超时行为符合当前测试口径 |
+| 自动化测试 | 33/33 通过 | 规则、演化决策、场景独立门禁、严格 holdout 门禁、多轮继续、冻结数据恢复校验、预算、恢复、LLM JSON 边界、候选证据隔离、Gold 复核、评测指标、跨进程互斥、SQLite 多写者、多文件回滚、容器安全默认值和进程超时行为符合当前测试口径 |
 | 确定性文本演化 | 坏候选 rollback，好候选 accept | 三数据集门禁能够阻止破坏留出集的候选，并保留安全改进 |
-| 代码 Agent 演化 | 坏代码 rollback，好代码 accept | 单文件代码候选能在独立目录和独立进程中进入同一演化闭环 |
+| 代码 Agent 演化 | 坏代码 rollback，好代码 accept | 单文件和多文件目录候选能在独立工作区进入同一演化闭环，回滚不覆盖基线 |
 | 评测 Skill 演化 | 坏候选 rollback，好候选 accept；improvement 0% → 100%，regression 100% → 100%，holdout 0% → 100% | 模拟审核报告可以按 improvement/regression/holdout 进入评测 Skill 自身的受控回放闭环 |
 | 评测 Skill 人工审核演化 | 10/10 已审核；两个参考候选均 rollback；较好候选 improvement 0% → 100%，regression 100% → 100%，holdout 25% → 75% | 人工审核结果可以驱动修改和门禁；严格策略不会因候选已有明显改善而放过剩余 holdout 错误 |
 | 评测 Skill 14B 重复评分 | 10 条 × 5 轮，50/50 调用成功；原 gold 一致率每轮 90%，重复稳定性 100%；复核 REVIEW-008 后事后重评分一致率 100% | 同一 Skill 与模型配置在本样本上输出稳定；Gold 复核与模型稳定性必须分开记录 |
 | 评测 Skill 14B AI 演化 | AI 正确诊断 2 个 badcase，但生成与 baseline 相同的候选；三套数据均无改善，候选 reject | 不完美 Evolver 的无效修改不会因“由 AI 生成”而获得特殊待遇，最小改进门禁能够阻止无效晋级 |
-| 健康助手原生 smoke | 20/20 通过，0 个硬失败，0 个软告警 | 框架能够接入实际 Agent 编排、原生评测入口和真实 Trace |
-| 健康助手 AI Prompt 首次演示 | improvement 25% → 100%，regression 100% → 100%，holdout 75% → 100% | AI 能根据失败 Trace 生成一个通过既定门禁的 Prompt 候选 |
-| 3 次预注册独立重复 | 1 次接受，1 次诊断 JSON 失败，1 次的两个候选均被 holdout 门禁回滚 | 闭环既能接受改进，也能阻止违反保护集门禁的候选；AI 协议层尚不稳定 |
-| 健康助手可追溯重跑 | 运行前记录框架与目标 commit、dirty 状态、JAR 和数据集哈希；第一个候选 rollback，第二个候选 accept | 参考集成可以绑定到实际执行产物，并在同一次运行中保留失败候选和接受候选 |
+| 私有外部系统 smoke | 20/20 通过，0 个硬失败，0 个软告警 | 框架能够接入实际 Agent 编排、原生评测入口和真实 Trace |
+| 私有外部系统 Prompt 演化 | improvement 25% → 100%，regression 100% → 100%，holdout 75% → 100% | AI 能根据失败 Trace 生成一个通过既定门禁的 Prompt 候选 |
+| 3 次独立重复 | 分别得到接受、外部生成失败和 holdout 回滚 | 外部 Evolver 的不同结果都进入同一审计、停止和门禁流程 |
+| 私有外部系统可追溯重跑 | 运行前记录框架、目标、执行产物和数据集身份；第一个候选 rollback，第二个候选 accept | 参考结果绑定实际执行身份，并在同一次运行中保留回滚和接受决策 |
 | 单机并发完整性 | 1、8、32 workers 各 1000 case，均为 1000 个唯一结果、0 个硬失败，10 次瞬态失败全部恢复 | 有界线程并发下未发现 case 丢失或重复，失败重试结果可审计 |
 | 并发故障记账与恢复 | 5 个永久失败均被记录；500 → 1000 case 恢复后得到 1000 个唯一结果；两个进程写入 50 个不同运行无丢失 | 永久错误不会被吞掉，分段恢复和 SQLite 多写者保持记录完整性 |
-
-首次演示中，健康助手候选在 improvement 和 holdout 上的平均延迟分别增加约 3.36 秒和 2.19 秒。本次机制测试没有预注册业务延迟阈值，因此延迟被记录但未阻断候选。框架当前已经支持将 `latency_ms` 配置为最小化目标并设置最大允许退化，业务接入协议也要求 M3/M4 在运行前冻结延迟门禁。这组数字保留为历史实验事实，不代表当前框架无法阻止延迟退化。
-
-3 次重复实验全部按计划保留，未补跑或筛掉失败结果。严格按完整闭环是否接受候选计算，接受率为 1/3。第 1 次重复把 improvement 从 25% 提升到 100%、regression 保持 100%、holdout 从 75% 提升到 100%，并被接受；第 2 次在诊断阶段因模型未返回合法 JSON 而失败；第 3 次生成两个内容相同的候选，两者虽然提高硬通过率，但都使 holdout 软告警从 0 增至 1，因此被确定性门禁回滚。首次演示加 3 次重复共 4 次运行，其中 2 次接受，但首次演示不属于预注册重复，不与 1/3 混为同一统计口径。
-
-第 2 次失败之后，框架新增了通用 LLM JSON 边界处理和一次受预算约束的协议重试。历史实验结果及哈希保持不变，不用修复后的代码追溯性地改写失败结果。
+| 短周期 soak | 10 秒、51 个连续批次、5100 个 case、0 失败；初始和结束线程数均为 1 | 重复运行期间结果完整，线程池在每批结束后回收 |
 
 ## 单机并发基线
 
@@ -65,6 +60,8 @@ Windows 11、Python 3.12.13 的无密钥合成压力结果保存在 [evidence/co
 | 32 | 512.65 case/s | 2.67 ms | 10,163,531 bytes |
 
 这组吞吐量是一次本机运行快照，会随调度和机器负载变化，不能作为生产容量指标。合成 Agent 每次只休眠约 1 毫秒，主要测量线程调度、规则计算和 SQLite 写入开销；8 workers 后已经进入本机开销饱和区，因此 32 workers 的瞬时吞吐没有继续上升。这不是稳定性失败：三个档位都得到 1000 个唯一结果、0 个硬失败，瞬态失败也全部恢复。加入 workers 两倍的有界在途窗口后，1000-case traced memory 保持在约 10 MB。当前证据支持单机有界并发下的共享状态完整性；真实 HTTP Agent 的容量上限仍需由接入方按自身延迟、限流和 SLO 执行 M4 压测。
+
+短周期持续运行结果保存在 [evidence/soak-results.json](evidence/soak-results.json)。10 秒内连续完成 51 个批次和 5100 个 case，0 失败；初始和结束线程数均为 1，Python traced memory 峰值约 2.48 MB。
 
 ## 评测 Skill 专项证据
 
@@ -84,23 +81,19 @@ REVIEW-007 和 REVIEW-008 都经历了“首次判断为正确、复核后裁决
 
 本次候选由确定性参考生成器提供，用于验证人工审核数据确实参与修改、回归与留出门禁。它不等同于 AI 自主发现了这些规则，也不证明 10 条合成案例足以代表真实业务分布。
 
-重复实验中的延迟变化没有统一方向。被接受的候选使 improvement 平均延迟降低 4.86 秒，但 regression 和 holdout 分别增加约 0.77 秒和 0.87 秒；被回滚候选使 improvement 增加约 2.42 秒、regression 增加约 0.04 秒、holdout 降低约 0.53 秒。这些历史运行没有预注册业务延迟门禁。当前框架可用 `latency_ms` 数值目标阻断超过业务容忍范围的候选，但阈值必须由业务方在运行前给出，框架不会替不同业务猜测统一上限。
-
-健康助手首次演示的精简机器摘要见 [evidence/ai-health-prompt-evolution-summary.json](evidence/ai-health-prompt-evolution-summary.json)，3 次重复的完整汇总见 [evidence/ai-health-repeat-results.json](evidence/ai-health-repeat-results.json)，AI 生成并被首次演示门禁接受的候选见 [evidence/ai-health-accepted-planner.prompt.txt](evidence/ai-health-accepted-planner.prompt.txt)。候选仅作为实验审计证据，不代表推荐直接用于生产。
+私有外部参考系统的聚合结果见 [首次演示摘要](evidence/ai-health-prompt-evolution-summary.json)、[三次重复汇总](evidence/ai-health-repeat-results.json)和[可追溯重跑摘要](evidence/ai-health-provenance-rerun-summary.json)。源码、Prompt、业务 case、适配器和内部报告不随本仓库公开。
 
 ## 数据与实验边界
 
-- 健康助手使用的是合成 case，不是真实患者数据或生产 badcase。
+- 私有外部参考系统使用合成 case，不是真实业务数据或生产 badcase。
 - 评测 Skill 专项数据也是合成人工审核历史，不代表已经积累真实审核报告。
-- 健康助手实验属于真实系统集成验证，不属于医疗业务效果验证。
-- 当前共有一次首次演示、3 次预注册重复和一次可追溯重跑。预注册重复样本仍然很小，1/3 只能描述那三次实验，不能外推为通用稳定成功率。
-- AI 候选生成具有随机性。历史运行出现过诊断 JSON 协议失败与重复候选；框架随后增加了通用 JSON 边界提取和一次受预算约束的协议重试，并继续用最小改进、回归和 holdout 门禁拒绝无效或重复修改。候选多样性仍取决于外部 Evolver，不作为框架正确性的前提。
-- 单文件代码候选具备进程生命周期隔离，但不是防恶意代码的安全沙箱。
-- 多文件仓库快照、构建缓存和容器级隔离不属于当前文本型 Prompt / Skill Beta 的成立条件。
+- 私有外部实验属于真实系统集成验证，不属于业务效果验证，也不用于推断其他系统的成功率。
+- AI 候选生成具有随机性；框架通过结构边界、预算、最小改进、regression 和 holdout 门禁处理外部 Evolver 结果。
+- 多文件快照与容器 Runner 已实现；构建缓存和多小时 soak 仍按实际需求扩展。
 
 ## 模型选择说明
 
-AI 参与的机制实验有意使用 `Qwen/Qwen3-14B`。本项目验证的是候选修改能否被隔离、复测、接受或回滚，不是比较基础模型能力。较小模型出现的非法 JSON、重复候选和错误修改属于框架必须处理的正常输入，也是验证协议重试、回归保护和 holdout 门禁的有效证据。
+AI 参与的机制实验有意使用 `Qwen/Qwen3-14B`。本项目验证的是候选修改能否被隔离、复测、接受或回滚，不是比较基础模型能力。较小模型产生的无效输出或错误修改属于框架需要处理的正常输入，用于验证结构边界、回归保护和 holdout 门禁。
 
 14B 的结果不代表模型能力上限，也不与不同任务上的大模型结果合并计算成功率。更强模型可能提高候选产出效率，但不会改变硬门禁、人工 gold 和数据集隔离要求。若未来比较模型大小，将另建同任务、同 baseline、同冻结数据、同预算和同重复次数的对照实验，不追溯改写当前证据。
 
@@ -112,11 +105,9 @@ AI 参与的机制实验有意使用 `Qwen/Qwen3-14B`。本项目验证的是候
 
 由无密钥确定性流程和自动化测试证明。任何贡献者都可以在本地和 CI 中复现。
 
-### 真实系统集成
+### 私有真实系统集成
 
-由 `ai-health-assistant` 的 JAR、HTTP 接口、Prompt 版本注册和 Trace 结果证明。该实验需要外部项目、Java 环境和模型服务，因此不放进公开无密钥 CI。
-
-公开仓库保存了[原生 smoke 报告](evidence/ai-health-native-smoke-report.md)、[状态污染报告](evidence/ai-health-chat-state-pollution-report.md)、Prompt 演化摘要和三次重复汇总。2026-08-31 的[可追溯重跑](evidence/ai-health-provenance-rerun-summary.json)在运行前记录了框架和目标 commit、dirty 状态、实际 JAR SHA-256、Java 与模型配置、数据集哈希和完整命令。目标工作区当时存在未提交改动，因此源码不能只靠 commit 重建；JAR 哈希固定了实际执行产物。旧实验仍保留原始身份，不追溯改写。
+聚合结果证明框架曾通过真实接口、版本切换和 Trace 接入一个外部 Agent 系统。该项目不随本仓库公开，因此这些结果只作为补充集成记录，不承担公共可复现机制证据，也不用于推断其他业务系统的效果。
 
 ### 业务效果
 

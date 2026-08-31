@@ -1,0 +1,385 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-08-31T13:29:07.266356+00:00",
+  "python": "3.12.13",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "status": "passed",
+  "duration_seconds": 10.408,
+  "cycles": 51,
+  "batch_cases": 100,
+  "total_cases": 5100,
+  "workers": 8,
+  "initial_threads": 1,
+  "final_threads": 1,
+  "failures": [],
+  "memory": {
+    "first_current_bytes": 864986,
+    "last_current_bytes": 1391595,
+    "peak_bytes": 2483795
+  },
+  "samples": [
+    {
+      "cycle": 1,
+      "elapsed_seconds": 0.269,
+      "current_traced_memory_bytes": 864986,
+      "peak_traced_memory_bytes": 1096184,
+      "active_threads": 1
+    },
+    {
+      "cycle": 2,
+      "elapsed_seconds": 0.491,
+      "current_traced_memory_bytes": 950830,
+      "peak_traced_memory_bytes": 1902990,
+      "active_threads": 1
+    },
+    {
+      "cycle": 3,
+      "elapsed_seconds": 0.708,
+      "current_traced_memory_bytes": 1045698,
+      "peak_traced_memory_bytes": 2003471,
+      "active_threads": 1
+    },
+    {
+      "cycle": 4,
+      "elapsed_seconds": 0.927,
+      "current_traced_memory_bytes": 1122510,
+      "peak_traced_memory_bytes": 2073419,
+      "active_threads": 1
+    },
+    {
+      "cycle": 5,
+      "elapsed_seconds": 1.112,
+      "current_traced_memory_bytes": 1216962,
+      "peak_traced_memory_bytes": 2177808,
+      "active_threads": 1
+    },
+    {
+      "cycle": 6,
+      "elapsed_seconds": 1.311,
+      "current_traced_memory_bytes": 1293660,
+      "peak_traced_memory_bytes": 2251191,
+      "active_threads": 1
+    },
+    {
+      "cycle": 7,
+      "elapsed_seconds": 1.49,
+      "current_traced_memory_bytes": 1368152,
+      "peak_traced_memory_bytes": 2319063,
+      "active_threads": 1
+    },
+    {
+      "cycle": 8,
+      "elapsed_seconds": 1.691,
+      "current_traced_memory_bytes": 1387172,
+      "peak_traced_memory_bytes": 2337977,
+      "active_threads": 1
+    },
+    {
+      "cycle": 9,
+      "elapsed_seconds": 1.889,
+      "current_traced_memory_bytes": 1424000,
+      "peak_traced_memory_bytes": 2374779,
+      "active_threads": 1
+    },
+    {
+      "cycle": 10,
+      "elapsed_seconds": 2.076,
+      "current_traced_memory_bytes": 1443881,
+      "peak_traced_memory_bytes": 2401531,
+      "active_threads": 1
+    },
+    {
+      "cycle": 11,
+      "elapsed_seconds": 2.279,
+      "current_traced_memory_bytes": 1458355,
+      "peak_traced_memory_bytes": 2409711,
+      "active_threads": 1
+    },
+    {
+      "cycle": 12,
+      "elapsed_seconds": 2.46,
+      "current_traced_memory_bytes": 1454975,
+      "peak_traced_memory_bytes": 2419437,
+      "active_threads": 1
+    },
+    {
+      "cycle": 13,
+      "elapsed_seconds": 2.652,
+      "current_traced_memory_bytes": 1469403,
+      "peak_traced_memory_bytes": 2420605,
+      "active_threads": 1
+    },
+    {
+      "cycle": 14,
+      "elapsed_seconds": 2.853,
+      "current_traced_memory_bytes": 1466119,
+      "peak_traced_memory_bytes": 2430535,
+      "active_threads": 1
+    },
+    {
+      "cycle": 15,
+      "elapsed_seconds": 3.047,
+      "current_traced_memory_bytes": 1480451,
+      "peak_traced_memory_bytes": 2434931,
+      "active_threads": 1
+    },
+    {
+      "cycle": 16,
+      "elapsed_seconds": 3.243,
+      "current_traced_memory_bytes": 1476555,
+      "peak_traced_memory_bytes": 2444301,
+      "active_threads": 1
+    },
+    {
+      "cycle": 17,
+      "elapsed_seconds": 3.445,
+      "current_traced_memory_bytes": 1491111,
+      "peak_traced_memory_bytes": 2455483,
+      "active_threads": 1
+    },
+    {
+      "cycle": 18,
+      "elapsed_seconds": 3.647,
+      "current_traced_memory_bytes": 799451,
+      "peak_traced_memory_bytes": 2455483,
+      "active_threads": 1
+    },
+    {
+      "cycle": 19,
+      "elapsed_seconds": 3.862,
+      "current_traced_memory_bytes": 895775,
+      "peak_traced_memory_bytes": 2455483,
+      "active_threads": 1
+    },
+    {
+      "cycle": 20,
+      "elapsed_seconds": 4.057,
+      "current_traced_memory_bytes": 972523,
+      "peak_traced_memory_bytes": 2455483,
+      "active_threads": 1
+    },
+    {
+      "cycle": 21,
+      "elapsed_seconds": 4.273,
+      "current_traced_memory_bytes": 1066823,
+      "peak_traced_memory_bytes": 2455483,
+      "active_threads": 1
+    },
+    {
+      "cycle": 22,
+      "elapsed_seconds": 4.479,
+      "current_traced_memory_bytes": 1143521,
+      "peak_traced_memory_bytes": 2455483,
+      "active_threads": 1
+    },
+    {
+      "cycle": 23,
+      "elapsed_seconds": 4.687,
+      "current_traced_memory_bytes": 1220205,
+      "peak_traced_memory_bytes": 2455483,
+      "active_threads": 1
+    },
+    {
+      "cycle": 24,
+      "elapsed_seconds": 4.881,
+      "current_traced_memory_bytes": 1314807,
+      "peak_traced_memory_bytes": 2455483,
+      "active_threads": 1
+    },
+    {
+      "cycle": 25,
+      "elapsed_seconds": 5.073,
+      "current_traced_memory_bytes": 1371953,
+      "peak_traced_memory_bytes": 2455483,
+      "active_threads": 1
+    },
+    {
+      "cycle": 26,
+      "elapsed_seconds": 5.262,
+      "current_traced_memory_bytes": 1408827,
+      "peak_traced_memory_bytes": 2455483,
+      "active_threads": 1
+    },
+    {
+      "cycle": 27,
+      "elapsed_seconds": 5.458,
+      "current_traced_memory_bytes": 1427893,
+      "peak_traced_memory_bytes": 2455483,
+      "active_threads": 1
+    },
+    {
+      "cycle": 28,
+      "elapsed_seconds": 5.663,
+      "current_traced_memory_bytes": 1464623,
+      "peak_traced_memory_bytes": 2455483,
+      "active_threads": 1
+    },
+    {
+      "cycle": 29,
+      "elapsed_seconds": 5.848,
+      "current_traced_memory_bytes": 1461193,
+      "peak_traced_memory_bytes": 2455483,
+      "active_threads": 1
+    },
+    {
+      "cycle": 30,
+      "elapsed_seconds": 6.018,
+      "current_traced_memory_bytes": 1475571,
+      "peak_traced_memory_bytes": 2455483,
+      "active_threads": 1
+    },
+    {
+      "cycle": 31,
+      "elapsed_seconds": 6.208,
+      "current_traced_memory_bytes": 1472287,
+      "peak_traced_memory_bytes": 2455483,
+      "active_threads": 1
+    },
+    {
+      "cycle": 32,
+      "elapsed_seconds": 6.4,
+      "current_traced_memory_bytes": 1486619,
+      "peak_traced_memory_bytes": 2455483,
+      "active_threads": 1
+    },
+    {
+      "cycle": 33,
+      "elapsed_seconds": 6.599,
+      "current_traced_memory_bytes": 1483335,
+      "peak_traced_memory_bytes": 2455483,
+      "active_threads": 1
+    },
+    {
+      "cycle": 34,
+      "elapsed_seconds": 6.786,
+      "current_traced_memory_bytes": 1497873,
+      "peak_traced_memory_bytes": 2462135,
+      "active_threads": 1
+    },
+    {
+      "cycle": 35,
+      "elapsed_seconds": 6.971,
+      "current_traced_memory_bytes": 1494443,
+      "peak_traced_memory_bytes": 2462135,
+      "active_threads": 1
+    },
+    {
+      "cycle": 36,
+      "elapsed_seconds": 7.157,
+      "current_traced_memory_bytes": 1508871,
+      "peak_traced_memory_bytes": 2473115,
+      "active_threads": 1
+    },
+    {
+      "cycle": 37,
+      "elapsed_seconds": 7.373,
+      "current_traced_memory_bytes": 1504961,
+      "peak_traced_memory_bytes": 2473115,
+      "active_threads": 1
+    },
+    {
+      "cycle": 38,
+      "elapsed_seconds": 7.558,
+      "current_traced_memory_bytes": 1514717,
+      "peak_traced_memory_bytes": 2473115,
+      "active_threads": 1
+    },
+    {
+      "cycle": 39,
+      "elapsed_seconds": 7.745,
+      "current_traced_memory_bytes": 1506537,
+      "peak_traced_memory_bytes": 2473115,
+      "active_threads": 1
+    },
+    {
+      "cycle": 40,
+      "elapsed_seconds": 7.927,
+      "current_traced_memory_bytes": 1515653,
+      "peak_traced_memory_bytes": 2483795,
+      "active_threads": 1
+    },
+    {
+      "cycle": 41,
+      "elapsed_seconds": 8.123,
+      "current_traced_memory_bytes": 1507473,
+      "peak_traced_memory_bytes": 2483795,
+      "active_threads": 1
+    },
+    {
+      "cycle": 42,
+      "elapsed_seconds": 8.307,
+      "current_traced_memory_bytes": 1517197,
+      "peak_traced_memory_bytes": 2483795,
+      "active_threads": 1
+    },
+    {
+      "cycle": 43,
+      "elapsed_seconds": 8.506,
+      "current_traced_memory_bytes": 1509145,
+      "peak_traced_memory_bytes": 2483795,
+      "active_threads": 1
+    },
+    {
+      "cycle": 44,
+      "elapsed_seconds": 8.711,
+      "current_traced_memory_bytes": 801267,
+      "peak_traced_memory_bytes": 2483795,
+      "active_threads": 1
+    },
+    {
+      "cycle": 45,
+      "elapsed_seconds": 8.892,
+      "current_traced_memory_bytes": 897495,
+      "peak_traced_memory_bytes": 2483795,
+      "active_threads": 1
+    },
+    {
+      "cycle": 46,
+      "elapsed_seconds": 9.076,
+      "current_traced_memory_bytes": 974193,
+      "peak_traced_memory_bytes": 2483795,
+      "active_threads": 1
+    },
+    {
+      "cycle": 47,
+      "elapsed_seconds": 9.278,
+      "current_traced_memory_bytes": 1068781,
+      "peak_traced_memory_bytes": 2483795,
+      "active_threads": 1
+    },
+    {
+      "cycle": 48,
+      "elapsed_seconds": 9.463,
+      "current_traced_memory_bytes": 1145433,
+      "peak_traced_memory_bytes": 2483795,
+      "active_threads": 1
+    },
+    {
+      "cycle": 49,
+      "elapsed_seconds": 9.649,
+      "current_traced_memory_bytes": 1239779,
+      "peak_traced_memory_bytes": 2483795,
+      "active_threads": 1
+    },
+    {
+      "cycle": 50,
+      "elapsed_seconds": 9.834,
+      "current_traced_memory_bytes": 1316495,
+      "peak_traced_memory_bytes": 2483795,
+      "active_threads": 1
+    },
+    {
+      "cycle": 51,
+      "elapsed_seconds": 10.025,
+      "current_traced_memory_bytes": 1391595,
+      "peak_traced_memory_bytes": 2483795,
+      "active_threads": 1
+    }
+  ],
+  "scope": "short single-machine repeated-run integrity and worker-thread cleanup",
+  "limitations": [
+    "This short check does not replace a multi-hour soak test.",
+    "Python tracemalloc does not measure total process RSS or external service resources.",
+    "Real business capacity remains an integration-specific M4 acceptance task."
+  ]
+}

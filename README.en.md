@@ -146,7 +146,7 @@ agent-eval evolve-auto `
   --loop-id router-evolution-v1
 ```
 
-`TextArtifactWorkspace` stores baseline snapshots and candidate artifacts under `.agent-eval/workspaces`. It never overwrites files in the domain project. Accepted artifacts remain in the isolated workspace; production deployment stays outside the loop.
+`TextArtifactWorkspace` stores baseline snapshots and candidate artifacts under `.agent-eval/workspaces`. A baseline may be one text file or a directory of text files. A multi-file candidate declares complete content by relative path through `TextCandidate.files`; the framework copies the current isolated directory, applies only those paths, and records a directory hash. Domain-project files are never overwritten, and production deployment stays outside the loop.
 
 The loop atomically writes `.agent-eval/workspaces/<loop-id>/checkpoint.json`. After an exception or budget stop, fix the external failure or raise the budget and reuse the same parameters with `--resume`. Completed cases are loaded from SQLite, and identical staged candidates are reused. The elapsed-time budget is checked between stages and does not kill a domain call already in progress. `--timeout` and the domain adapter still control individual calls.
 
@@ -154,7 +154,7 @@ The loop atomically writes `.agent-eval/workspaces/<loop-id>/checkpoint.json`. A
 
 ### Code Agents
 
-Code candidates use `change_type: code`, and a domain adapter may launch them with `run_agent_process`. Candidate files remain in a separate working directory. The runner captures stdout and stderr, applies the explicit working directory, and terminates the process tree after a timeout.
+Code candidates use `change_type: code`, and a domain adapter may launch them with `run_agent_process`. Candidate files remain in a separate working directory. Directory candidates may modify several declared files; escaping relative paths are rejected before any write, and rolled-back candidates never overwrite the baseline directory. The runner captures stdout and stderr, applies the explicit working directory, and terminates the process tree after a timeout.
 
 ```powershell
 agent-eval evolve-auto `
@@ -167,15 +167,24 @@ agent-eval evolve-auto `
   --max-candidates-per-round 2
 ```
 
-This isolates candidate files and process lifecycles. It is not a security sandbox for hostile code. Run untrusted candidates in a container, virtual machine, or restricted execution service.
+Trusted code can use the process runner directly. Untrusted candidates can use `run_agent_container` with Docker or Podman. Its defaults disable networking, mount the candidate workspace read-only, use a read-only container filesystem, drop capabilities, and limit CPU, memory, and PIDs. Container isolation still depends on the host runtime; high-risk execution may require a virtual machine or restricted execution service.
+
+```python
+from agent_eval import run_agent_container
+
+result = run_agent_container(
+    "python:3.12",
+    ["python", "agent.py"],
+    candidate_directory,
+    timeout_seconds=60,
+)
+```
 
 For model-generated diagnoses and candidates, an adapter can use `OpenAICompatibleTextEvolver.diagnose` and `generate_candidates`. It reads `AGENT_EVAL_MODEL`, `AGENT_EVAL_BASE_URL`, and `AGENT_EVAL_API_KEY`. Candidate generation receives only failed improvement evidence and the current text. Regression and holdout content stay hidden. Deterministic gates still make every acceptance and rollback decision.
 
-## Reference integration
+## Private reference-system result
 
-`integrations/ai_health_assistant/` contains an isolated domain adapter, case converter, and Prompt runtime for the AI Health Assistant reference system. Standard evaluation calls its native `/evaluate` endpoint once per suite, then reads real traces from `/traces` by `caseId`. `/chat` is reserved for single-case debugging. See the [integration guide](integrations/ai_health_assistant/README.md) for commands and current boundaries.
-
-Prompt evolution copies cases and version files into the framework workspace, starts an isolated JAR on a random port, registers and activates the candidate, then evaluates improvement, regression, and holdout. In the mechanism test run on August 30, 2026, the AI candidate moved hard-pass rates from 25%, 100%, and 75% to 100%, 100%, and 100%, respectively. The candidate was accepted only inside the workspace. No health-project or production file was changed.
+The framework was integrated with an external Agent system that is not distributed in this repository. Its real HTTP interface, version switching, and traces were used in a Prompt-evolution run. One mechanism run moved improvement, regression, and holdout hard-pass rates from 25%, 100%, and 75% to 100%, 100%, and 100%, respectively, with acceptance limited to the framework workspace. The public repository keeps aggregate results only. It does not include the private system's source, Prompt, business cases, adapter, or executable reproduction material. Core mechanics remain independently reproducible through the generic deterministic tasks and CI in this repository.
 
 ## Case format
 
