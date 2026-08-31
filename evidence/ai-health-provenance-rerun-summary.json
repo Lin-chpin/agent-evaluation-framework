@@ -1,0 +1,123 @@
+{
+  "schema_version": 1,
+  "experiment_id": "ai-health-provenance-rerun-20260831",
+  "date": "2026-08-31",
+  "purpose": "traceable real-system integration and controlled Prompt-evolution rerun",
+  "preflight": {
+    "framework": {
+      "commit": "673103e1b185b10029ce9570e78ce99d970472c2",
+      "source_is_dirty": false
+    },
+    "target_system": {
+      "name": "ai-health-assistant",
+      "commit": "eae031419eb2cdd089891a53551baa164d64d580",
+      "source_is_dirty": true,
+      "dirty_entry_count": 46,
+      "jar_sha256": "C1381B2B59B356E70B71A42C9EA59154977C8DE1672F712750CF6821FE199A13"
+    },
+    "runtime": {
+      "java": "OpenJDK 21.0.10",
+      "model": "Qwen/Qwen3-14B",
+      "provider_interface": "SiliconFlow OpenAI-compatible API",
+      "base_url": "https://api.siliconflow.cn/v1",
+      "temperature": 0,
+      "max_tokens": null
+    },
+    "source_datasets": {
+      "improvement": {
+        "case_count": 4,
+        "sha256": "967B5971C59D3A73650C29274A09D3E851974283F6BBEF6B76D46371570A1DC3"
+      },
+      "regression": {
+        "case_count": 8,
+        "sha256": "E05187E2364A3366C68E6139FE123ED3A0AF68ECC1EC37AC2797DEA129DF7EB5"
+      },
+      "holdout": {
+        "case_count": 8,
+        "sha256": "17F91CD20D5033BAA03787DF4E87112B1A7AD7126C12301480EE2180213ED5B8"
+      }
+    },
+    "command": "python -m agent_eval evolve-auto --auto-adapter integrations/ai_health_assistant/prompt_auto_evolution.py --improvement integrations/ai_health_assistant/benchmarks/improvement.jsonl --regression integrations/ai_health_assistant/benchmarks/regression.jsonl --holdout integrations/ai_health_assistant/benchmarks/holdout.jsonl --max-rounds 2 --max-candidates-per-round 2 --max-evolver-calls 4 --timeout 900 --loop-id ai-health-provenance-rerun-20260831"
+  },
+  "attempts": [
+    {
+      "status": "environment_blocked",
+      "phase": "diagnosis",
+      "elapsed_seconds": 60.625,
+      "reason": "the local Codex sandbox blocked the outbound model socket before a model response was received"
+    },
+    {
+      "status": "completed",
+      "resumed_same_loop": true,
+      "elapsed_seconds": 541.562,
+      "evolver_calls": 3,
+      "evolver_retries": 0
+    }
+  ],
+  "frozen_normalized_case_manifest": {
+    "improvement": {
+      "case_count": 4,
+      "sha256": "62ACCB5BDC3DBFAB3925DF1D9CDF76B2A273419EDA984380DC7845CDBCC33CEA"
+    },
+    "regression": {
+      "case_count": 8,
+      "sha256": "172F47CA50335D38D17781E3CF151AF7327F26453D1868D4BCDADF6A75D75044"
+    },
+    "holdout": {
+      "case_count": 8,
+      "sha256": "6629BCF2FC3588A07266FF37ED8B23424A49066807818A6E64FDBF2D62CE2EE1"
+    }
+  },
+  "result": {
+    "status": "completed",
+    "initial_version": "defect-v1",
+    "accepted_version": "ai-r1-c2-c31dc8",
+    "candidate_count": 2,
+    "candidates": [
+      {
+        "candidate_id": "ai-round-1-1-b35ef7",
+        "candidate_version": "ai-r1-c1-6cc590",
+        "decision": "rollback",
+        "reason": "holdout soft warnings increased by one"
+      },
+      {
+        "candidate_id": "ai-round-1-2-cc0f5b",
+        "candidate_version": "ai-r1-c2-c31dc8",
+        "decision": "accept",
+        "reason": "improvement hard-pass rate increased and soft warnings decreased without violating regression or holdout gates"
+      }
+    ],
+    "accepted_candidate_metrics": {
+      "improvement": {
+        "baseline_hard_pass_rate": 0.25,
+        "candidate_hard_pass_rate": 1.0,
+        "soft_warning_delta": -2,
+        "mean_latency_ms_delta": -3066.75
+      },
+      "regression": {
+        "baseline_hard_pass_rate": 1.0,
+        "candidate_hard_pass_rate": 1.0,
+        "soft_warning_delta": 0,
+        "mean_latency_ms_delta": 194.375
+      },
+      "holdout": {
+        "baseline_hard_pass_rate": 0.75,
+        "candidate_hard_pass_rate": 1.0,
+        "soft_warning_delta": 0,
+        "mean_latency_ms_delta": 4131.125
+      }
+    }
+  },
+  "sha256": {
+    "full_local_audit": "86835FBF5E0026E7B0C07385CCF1262B6C03C82953E09C7F458B1AB181CD6A6D",
+    "accepted_prompt_local_artifact": "2D3E4FB671BF64D07CDD5378DB9A59F8F31C2F2BD9AA2D81774485B220B98AC6",
+    "accepted_prompt_public_copy": "8B252F2577FB34DD0DCB1801F179EEECAAD226E111EF415DA153D35378D55A8E"
+  },
+  "limitations": [
+    "The target system worktree was dirty; the JAR hash binds the executed artifact, while the Git commit alone does not reconstruct its source tree.",
+    "The cases are synthetic and do not establish medical business outcomes.",
+    "The accepted candidate increased mean holdout latency by about 4.13 seconds because no business latency gate was registered.",
+    "The model diagnosis included a non-authoritative systemic-exit explanation that was not used as a hard-gate decision.",
+    "Acceptance occurred only in the framework sandbox and is not a production recommendation."
+  ]
+}

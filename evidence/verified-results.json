@@ -1,12 +1,12 @@
 {
   "schema_version": 2,
-  "generated_at": "2026-08-31T07:39:34.333423+00:00",
+  "generated_at": "2026-08-31T07:58:50.255784+00:00",
   "python": "3.12.13",
   "framework": {
     "name": "agent-evaluation-framework",
     "version": "0.3.0",
-    "source_revision": null,
-    "source_is_dirty": null
+    "source_revision": "673103e1b185b10029ce9570e78ce99d970472c2",
+    "source_is_dirty": false
   },
   "platform": {
     "system": "Windows",

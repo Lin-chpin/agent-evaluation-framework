@@ -44,6 +44,7 @@ Each dataset has two identities. `source_file_sha256` is the byte-level hash of 
 | Native health-assistant smoke suite | 20/20 passed with no hard failure or soft warning | The framework can connect to a real Agent orchestrator, its native evaluation endpoint, and real traces. |
 | First health-assistant AI Prompt demonstration | Improvement 25% to 100%, regression 100% to 100%, holdout 75% to 100% | An AI can use failed traces to produce a Prompt candidate that passes the predefined gates. |
 | Three preregistered independent repeats | One accepted run, one diagnosis JSON failure, and one run where both candidates were rolled back by holdout | The loop can accept a valid change and block protected-set regressions. The AI protocol layer remains unstable. |
+| Traceable health-assistant rerun | Framework and target commits, dirty states, JAR and dataset hashes were recorded before execution. Candidate one rolled back and candidate two was accepted. | A reference integration can bind its result to the executed artifact while preserving both failed and accepted candidates from the same run. |
 | Single-machine concurrency integrity | 1, 8, and 32 workers each processed 1,000 cases with 1,000 unique results, no hard failure, and recovery from all 10 transient failures | Bounded threaded concurrency did not lose or duplicate cases, and retry outcomes remained auditable. |
 | Failure accounting and resume | All five permanent failures were recorded. Resuming from 500 to 1,000 cases produced 1,000 unique results. Two processes wrote 50 separate runs without loss. | Permanent errors are not swallowed. Staged resume and concurrent SQLite writers preserve record integrity. |
 
@@ -92,7 +93,7 @@ The compact first-demonstration summary is stored in [evidence/ai-health-prompt-
 - The health assistant uses synthetic cases, not real patient data or production bad cases.
 - Evaluator-Skill data also represents synthetic human-review history, not an accumulated production review set.
 - The health-assistant experiment validates real system integration. It does not validate clinical outcomes.
-- The project currently has one original demonstration and three preregistered repeats. The repeat sample is small. The observed 1/3 acceptance rate describes only these runs and cannot be generalized into a stable success rate.
+- The project has one original demonstration, three preregistered repeats, and one traceable rerun. The preregistered sample remains small. Its 1/3 acceptance rate describes only those three runs and cannot be generalized into a stable success rate.
 - AI candidate generation is stochastic. The diagnosis JSON failure and duplicate candidates show that protocol robustness and candidate diversity still need work.
 - Single-file code candidates have process-lifecycle isolation, not a security sandbox for hostile code.
 - Multi-file repository snapshots, build caches, and container isolation are outside the acceptance criteria for the current text Prompt and Skill Beta.
@@ -115,7 +116,7 @@ The keyless deterministic flow and automated tests establish mechanism behavior.
 
 The AI Health Assistant JAR, HTTP interface, Prompt version registration, and trace results establish integration with a working system. This experiment requires the external project, Java environment, and model service, so it is not part of the public keyless CI.
 
-The repository includes the [native smoke report](evidence/ai-health-native-smoke-report.md), the [state-pollution report](evidence/ai-health-chat-state-pollution-report.md), the Prompt-evolution summary, and the three-repeat summary. The historical run did not record the target source revision or JAR SHA-256 before execution, and its full audit is not public. The evidence therefore supports an author-run real-system integration, but not bit-for-bit reconstruction by a third party. Later file identities will not be backfilled into that historical run.
+The repository includes the [native smoke report](evidence/ai-health-native-smoke-report.md), the [state-pollution report](evidence/ai-health-chat-state-pollution-report.md), the Prompt-evolution summary, and the three-repeat summary. The [traceable rerun](evidence/ai-health-provenance-rerun-summary.json) recorded framework and target commits, dirty-worktree states, the executed JAR SHA-256, Java and model configuration, dataset hashes, and the complete command before execution. The target worktree was dirty, so its commit alone cannot reconstruct the source tree; the JAR hash binds the executed artifact. Historical runs retain their original identity and are not backfilled.
 
 ### Business outcomes
 
