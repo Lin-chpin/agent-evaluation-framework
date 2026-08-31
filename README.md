@@ -169,6 +169,8 @@ agent-eval evolve-auto `
 
 可信代码可以直接使用进程 Runner。不可信候选可通过 `run_agent_container` 调用 Docker 或 Podman；默认禁用网络、只读挂载候选目录、只读容器文件系统、移除 capabilities，并限制 CPU、内存和 PID。容器仍依赖宿主机运行时的安全配置，高风险执行可以继续使用虚拟机或受限执行服务。
 
+Linux GitHub Actions 会启动真实 Docker 容器，逐项验证工作区只读、根文件系统只读、网络禁用和 `/tmp` 可写，并上传包含镜像 RepoDigest 的 `container-smoke.json`，因此容器证据不只停留在命令构造测试。
+
 ```python
 from agent_eval import run_agent_container
 

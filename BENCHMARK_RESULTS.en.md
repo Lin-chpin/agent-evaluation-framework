@@ -34,7 +34,7 @@ Each dataset has two identities. `source_file_sha256` is the byte-level hash of 
 
 | Evidence | Result | What it supports |
 | --- | --- | --- |
-| Automated tests | 33/33 passed | Current tests cover rules, evolution decisions, independent scenario gates, strict holdout gating, continued multi-round improvement, frozen-dataset resume checks, budgets, recovery, LLM JSON boundaries, candidate-evidence isolation, Gold adjudication, evaluator metrics, cross-process locking, concurrent SQLite writers, multi-file rollback, container security defaults, and process timeout behavior. |
+| Automated tests | 38/38 passed | Current tests cover rules, evolution decisions, independent scenario gates, strict holdout gating, continued multi-round improvement, frozen-dataset resume checks, empty-suite and duplicate-ID rejection, append-only resume identity, budgets, LLM JSON boundaries, candidate-evidence isolation, Gold adjudication, evaluator metrics, cross-process locking, concurrent SQLite writers, multi-file rollback, container security defaults, and process timeout behavior. |
 | Deterministic text evolution | Harmful candidate rolled back; safe candidate accepted | Three-set gating blocks a candidate that damages holdout while preserving a safe improvement. |
 | Code Agent evolution | Harmful code rolled back; safe code accepted | Single-file and multi-file directory candidates can enter the same loop without rollback overwriting the baseline. |
 | Evaluator-Skill evolution | Harmful candidate rolled back; safe candidate accepted. Improvement 0% to 100%, regression 100% to 100%, holdout 0% to 100%. | Simulated review reports can drive a controlled evaluator-Skill replay across improvement, regression, and holdout. |
@@ -47,6 +47,7 @@ Each dataset has two identities. `source_file_sha256` is the byte-level hash of 
 | Traceable private-system rerun | Framework, target, executed-artifact, and dataset identities were recorded before execution. Candidate one rolled back and candidate two was accepted. | The result is bound to the executed identity while preserving rollback and acceptance decisions from the same run. |
 | Single-machine concurrency integrity | 1, 8, and 32 workers each processed 1,000 cases with 1,000 unique results, no hard failure, and recovery from all 10 transient failures | Bounded threaded concurrency did not lose or duplicate cases, and retry outcomes remained auditable. |
 | Failure accounting and resume | All five permanent failures were recorded. Resuming from 500 to 1,000 cases produced 1,000 unique results. Two processes wrote 50 separate runs without loss. | Permanent errors are not swallowed. Staged resume and concurrent SQLite writers preserve record integrity. |
+| Real container smoke | Read-only workspace, read-only root filesystem, disabled networking, and writable `/tmp` all passed in Linux CI. | Docker defaults are verified through real container behavior rather than only command strings. |
 | Short soak | 10 seconds, 51 consecutive batches, 5,100 cases, no failure, and one thread both before and after | Results remain complete across repeated runs and worker threads are reclaimed after each batch. |
 
 ## Single-machine concurrency baseline
@@ -89,7 +90,7 @@ Aggregate results for the private external reference system are available in the
 - Evaluator-Skill data also represents synthetic human-review history, not an accumulated production review set.
 - The private external experiment validates real system integration, not business outcomes, and does not predict success for another system.
 - AI candidate generation is stochastic. Structure boundaries, budgets, minimum improvement, regression, and holdout gates handle external Evolver results.
-- Multi-file snapshots and a container runner are implemented. Build caching and multi-hour soak remain demand-driven extensions.
+- Multi-file snapshots and a container runner are implemented, and a real Docker smoke runs in Linux CI. Build caching and multi-hour soak remain demand-driven extensions.
 
 ## Why the experiments use a 14B model
 

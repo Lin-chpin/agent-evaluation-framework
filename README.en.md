@@ -169,6 +169,8 @@ agent-eval evolve-auto `
 
 Trusted code can use the process runner directly. Untrusted candidates can use `run_agent_container` with Docker or Podman. Its defaults disable networking, mount the candidate workspace read-only, use a read-only container filesystem, drop capabilities, and limit CPU, memory, and PIDs. Container isolation still depends on the host runtime; high-risk execution may require a virtual machine or restricted execution service.
 
+Linux GitHub Actions starts a real Docker container and verifies a read-only workspace, a read-only root filesystem, disabled networking, and writable `/tmp`. It uploads `container-smoke.json` with the image RepoDigest, so the container evidence does not stop at command-construction tests.
+
 ```python
 from agent_eval import run_agent_container
 

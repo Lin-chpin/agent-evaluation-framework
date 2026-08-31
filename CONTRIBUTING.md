@@ -21,4 +21,10 @@ python scripts/verify_concurrency.py --output evidence/concurrency-results.json
 python scripts/verify_soak.py --duration-seconds 10 --output evidence/soak-results.json
 ```
 
+安装并启动 Docker 后，还可以运行真实容器隔离 smoke：
+
+```powershell
+python scripts/verify_container.py --output evidence/container-smoke-results.json
+```
+
 提交贡献即表示你有权提供相关内容，并同意贡献内容按照仓库的 [PolyForm Noncommercial License 1.0.0](LICENSE) 发布。贡献不会自动获得商业使用授权。
