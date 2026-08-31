@@ -1,0 +1,10 @@
+{
+  "candidate_id": "intent-router-v2",
+  "target_type": "skill",
+  "target_id": "intent-router",
+  "baseline_version": "1",
+  "candidate_version": "2",
+  "change_type": "skill",
+  "artifact_ref": "examples/evolution_candidate_adapter.py",
+  "summary": "Route support-related requests to the support path"
+}

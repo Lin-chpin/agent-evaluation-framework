@@ -1,0 +1,2 @@
+{"id":"EXAMPLE-001","scenario":"direct","input":{"message":"hello agent"},"expected":{"route":"ECHO","keyword":"hello"},"metadata":{"system_constraints":{"max_steps":3,"max_retries":0}}}
+

@@ -1,0 +1,507 @@
+{
+  "schema_version": 2,
+  "generated_at": "2026-08-31T07:39:34.333423+00:00",
+  "python": "3.12.13",
+  "framework": {
+    "name": "agent-evaluation-framework",
+    "version": "0.3.0",
+    "source_revision": null,
+    "source_is_dirty": null
+  },
+  "platform": {
+    "system": "Windows",
+    "release": "11",
+    "machine": "AMD64"
+  },
+  "reproduction": {
+    "command": "python scripts/verify_evidence.py --output evidence/verified-results.json"
+  },
+  "tests": {
+    "status": "passed",
+    "count": 33
+  },
+  "text_evolution": {
+    "status": "completed",
+    "target_type": "skill",
+    "target_id": "intent-router",
+    "initial_version": "1",
+    "current_version": "2",
+    "candidate_decisions": [
+      "rollback",
+      "accept"
+    ],
+    "accepted_candidate": true,
+    "evolver_calls": 2,
+    "evolver_retries": 0,
+    "datasets": {
+      "improvement": {
+        "case_count": 1,
+        "human_reviewed_cases": 0,
+        "simulated_review_cases": 0,
+        "source_file_sha256": "ECADF100373501B1CA45DDC5BF1A7546D184D3B7F39F8408A2FCCB0CA15AA0BA"
+      },
+      "regression": {
+        "case_count": 1,
+        "human_reviewed_cases": 0,
+        "simulated_review_cases": 0,
+        "source_file_sha256": "2EB5C0E2E309DF33354A6E8CD92E9314415A80E2B2D4D5B9DAA6F9BA695C130F"
+      },
+      "holdout": {
+        "case_count": 1,
+        "human_reviewed_cases": 0,
+        "simulated_review_cases": 0,
+        "source_file_sha256": "3A173C730E931807055FE25E6DC769D870E6BAEB2F5DEBB7098AD0F4203CAF31"
+      }
+    },
+    "normalized_case_manifest": {
+      "holdout": {
+        "case_count": 1,
+        "sha256": "562B0AF14A025C5AEA876F7D859C757C83F998FA5427B58DB87D5DDEF9617920"
+      },
+      "improvement": {
+        "case_count": 1,
+        "sha256": "DE6A8A2D334EE5EF3A14FEAC9EA6D42C24C7103E84770C6B5FA48F334EC7A405"
+      },
+      "regression": {
+        "case_count": 1,
+        "sha256": "B74AC17C98D0F9BFE54F52403761E9E5D1EF81866E77EB88055154B6E1E1F77B"
+      }
+    },
+    "hard_pass_rates": {
+      "improvement": {
+        "baseline": 0.0,
+        "candidate": 1.0
+      },
+      "regression": {
+        "baseline": 1.0,
+        "candidate": 1.0
+      },
+      "holdout": {
+        "baseline": 1.0,
+        "candidate": 1.0
+      }
+    }
+  },
+  "code_evolution": {
+    "status": "completed",
+    "target_type": "agent",
+    "target_id": "process-router",
+    "initial_version": "1",
+    "current_version": "2",
+    "candidate_decisions": [
+      "rollback",
+      "accept"
+    ],
+    "accepted_candidate": true,
+    "evolver_calls": 2,
+    "evolver_retries": 0,
+    "datasets": {
+      "improvement": {
+        "case_count": 1,
+        "human_reviewed_cases": 0,
+        "simulated_review_cases": 0,
+        "source_file_sha256": "ECADF100373501B1CA45DDC5BF1A7546D184D3B7F39F8408A2FCCB0CA15AA0BA"
+      },
+      "regression": {
+        "case_count": 1,
+        "human_reviewed_cases": 0,
+        "simulated_review_cases": 0,
+        "source_file_sha256": "2EB5C0E2E309DF33354A6E8CD92E9314415A80E2B2D4D5B9DAA6F9BA695C130F"
+      },
+      "holdout": {
+        "case_count": 1,
+        "human_reviewed_cases": 0,
+        "simulated_review_cases": 0,
+        "source_file_sha256": "3A173C730E931807055FE25E6DC769D870E6BAEB2F5DEBB7098AD0F4203CAF31"
+      }
+    },
+    "normalized_case_manifest": {
+      "holdout": {
+        "case_count": 1,
+        "sha256": "562B0AF14A025C5AEA876F7D859C757C83F998FA5427B58DB87D5DDEF9617920"
+      },
+      "improvement": {
+        "case_count": 1,
+        "sha256": "DE6A8A2D334EE5EF3A14FEAC9EA6D42C24C7103E84770C6B5FA48F334EC7A405"
+      },
+      "regression": {
+        "case_count": 1,
+        "sha256": "B74AC17C98D0F9BFE54F52403761E9E5D1EF81866E77EB88055154B6E1E1F77B"
+      }
+    },
+    "hard_pass_rates": {
+      "improvement": {
+        "baseline": 0.0,
+        "candidate": 1.0
+      },
+      "regression": {
+        "baseline": 1.0,
+        "candidate": 1.0
+      },
+      "holdout": {
+        "baseline": 1.0,
+        "candidate": 1.0
+      }
+    }
+  },
+  "evaluator_skill_evolution": {
+    "status": "completed",
+    "target_type": "evaluator_skill",
+    "target_id": "report-reviewer",
+    "initial_version": "1",
+    "current_version": "2",
+    "candidate_decisions": [
+      "rollback",
+      "accept"
+    ],
+    "accepted_candidate": true,
+    "evolver_calls": 2,
+    "evolver_retries": 0,
+    "datasets": {
+      "improvement": {
+        "case_count": 1,
+        "human_reviewed_cases": 0,
+        "simulated_review_cases": 1,
+        "source_file_sha256": "611CB711D8ED0F29272DF5B0F60D2160A532681B1578B1AE3FDCD74C59804B40"
+      },
+      "regression": {
+        "case_count": 2,
+        "human_reviewed_cases": 0,
+        "simulated_review_cases": 2,
+        "source_file_sha256": "C00857E9F1F2F82047C3EBD146076A175333748EDD292830B8D519B8397D172F"
+      },
+      "holdout": {
+        "case_count": 1,
+        "human_reviewed_cases": 0,
+        "simulated_review_cases": 1,
+        "source_file_sha256": "8E445793EDEA2BB6AABE1EE887B9D1E69866F128E3986D95CF920133B63757AC"
+      }
+    },
+    "normalized_case_manifest": {
+      "holdout": {
+        "case_count": 1,
+        "sha256": "6443657B5283D2E6D55C202022C3B134E2A7A68467A887287A7120832450BB83"
+      },
+      "improvement": {
+        "case_count": 1,
+        "sha256": "AAF17CA159648B4508056EC994CAAEAD7046C30878DAF5B09EF91632F38C58F2"
+      },
+      "regression": {
+        "case_count": 2,
+        "sha256": "213CB593E9C6C815B8C2907C220340399FD1B910E10F84EC12052E080C355FD9"
+      }
+    },
+    "hard_pass_rates": {
+      "improvement": {
+        "baseline": 0.0,
+        "candidate": 1.0
+      },
+      "regression": {
+        "baseline": 1.0,
+        "candidate": 1.0
+      },
+      "holdout": {
+        "baseline": 0.0,
+        "candidate": 1.0
+      }
+    },
+    "classification_metrics": {
+      "improvement": {
+        "baseline": {
+          "case_count": 1,
+          "evaluated_count": 1,
+          "agreement_count": 0,
+          "agreement_rate": 0.0,
+          "false_positive_count": 0,
+          "false_negative_count": 1,
+          "field_accuracy": {
+            "verdict": 0.0
+          },
+          "predictions": {
+            "EVAL-SKILL-IMPROVE-001": "CORRECT"
+          }
+        },
+        "candidate": {
+          "case_count": 1,
+          "evaluated_count": 1,
+          "agreement_count": 1,
+          "agreement_rate": 1.0,
+          "false_positive_count": 0,
+          "false_negative_count": 0,
+          "field_accuracy": {
+            "verdict": 1.0
+          },
+          "predictions": {
+            "EVAL-SKILL-IMPROVE-001": "INCORRECT"
+          }
+        }
+      },
+      "regression": {
+        "baseline": {
+          "case_count": 2,
+          "evaluated_count": 2,
+          "agreement_count": 2,
+          "agreement_rate": 1.0,
+          "false_positive_count": 0,
+          "false_negative_count": 0,
+          "field_accuracy": {
+            "verdict": 1.0
+          },
+          "predictions": {
+            "EVAL-SKILL-REGRESSION-001": "CORRECT",
+            "EVAL-SKILL-REGRESSION-002": "INCORRECT"
+          }
+        },
+        "candidate": {
+          "case_count": 2,
+          "evaluated_count": 2,
+          "agreement_count": 2,
+          "agreement_rate": 1.0,
+          "false_positive_count": 0,
+          "false_negative_count": 0,
+          "field_accuracy": {
+            "verdict": 1.0
+          },
+          "predictions": {
+            "EVAL-SKILL-REGRESSION-001": "CORRECT",
+            "EVAL-SKILL-REGRESSION-002": "INCORRECT"
+          }
+        }
+      },
+      "holdout": {
+        "baseline": {
+          "case_count": 1,
+          "evaluated_count": 1,
+          "agreement_count": 0,
+          "agreement_rate": 0.0,
+          "false_positive_count": 0,
+          "false_negative_count": 1,
+          "field_accuracy": {
+            "verdict": 0.0
+          },
+          "predictions": {
+            "EVAL-SKILL-HOLDOUT-001": "CORRECT"
+          }
+        },
+        "candidate": {
+          "case_count": 1,
+          "evaluated_count": 1,
+          "agreement_count": 1,
+          "agreement_rate": 1.0,
+          "false_positive_count": 0,
+          "false_negative_count": 0,
+          "field_accuracy": {
+            "verdict": 1.0
+          },
+          "predictions": {
+            "EVAL-SKILL-HOLDOUT-001": "INCORRECT"
+          }
+        }
+      }
+    }
+  },
+  "evaluator_skill_human_evolution": {
+    "status": "no_acceptable_candidate",
+    "target_type": "evaluator_skill",
+    "target_id": "human-reviewed-report-reviewer",
+    "initial_version": "1",
+    "current_version": "1",
+    "candidate_decisions": [
+      "rollback",
+      "rollback"
+    ],
+    "accepted_candidate": false,
+    "evolver_calls": 2,
+    "evolver_retries": 0,
+    "datasets": {
+      "improvement": {
+        "case_count": 2,
+        "human_reviewed_cases": 2,
+        "simulated_review_cases": 0,
+        "source_file_sha256": "D15A669CE696A7587C67C88E49E59D1461859D05F53B710651965820D1C6E031"
+      },
+      "regression": {
+        "case_count": 4,
+        "human_reviewed_cases": 4,
+        "simulated_review_cases": 0,
+        "source_file_sha256": "DCEB045F19AFB03824B887431344092A56D3D480A1FF726263B85635BEE109F2"
+      },
+      "holdout": {
+        "case_count": 4,
+        "human_reviewed_cases": 4,
+        "simulated_review_cases": 0,
+        "source_file_sha256": "3E5577C612F990C9CBDD3F42DB68EC8F23BB00D834A15B42B59A0F9BE75686E1"
+      }
+    },
+    "normalized_case_manifest": {
+      "holdout": {
+        "case_count": 4,
+        "sha256": "3235CA38E0CE1562E3BD59E62C5E0D618F1A1F6BF8252358505FFC8DD7B74250",
+        "evaluated_target_id": [
+          "synthetic-general-agent"
+        ],
+        "evaluated_target_version": [
+          "synthetic-v1"
+        ],
+        "evaluator_skill_id": [
+          "report-reviewer"
+        ],
+        "evaluator_skill_version": [
+          "review-draft-v1"
+        ]
+      },
+      "improvement": {
+        "case_count": 2,
+        "sha256": "02E10435C83F785D29D1E870CAEA5311608BAE4A8641B3AB0043C57E30427D62",
+        "evaluated_target_id": [
+          "synthetic-general-agent"
+        ],
+        "evaluated_target_version": [
+          "synthetic-v1"
+        ],
+        "evaluator_skill_id": [
+          "report-reviewer"
+        ],
+        "evaluator_skill_version": [
+          "review-draft-v1"
+        ]
+      },
+      "regression": {
+        "case_count": 4,
+        "sha256": "D786F4264D12F56FBEBC1A480F80AAFD26A5478E987539D67498645C4CA3C740",
+        "evaluated_target_id": [
+          "synthetic-general-agent"
+        ],
+        "evaluated_target_version": [
+          "synthetic-v1"
+        ],
+        "evaluator_skill_id": [
+          "report-reviewer"
+        ],
+        "evaluator_skill_version": [
+          "review-draft-v1"
+        ]
+      }
+    },
+    "hard_pass_rates": {
+      "improvement": {
+        "baseline": 0.0,
+        "candidate": 1.0
+      },
+      "regression": {
+        "baseline": 1.0,
+        "candidate": 1.0
+      },
+      "holdout": {
+        "baseline": 0.25,
+        "candidate": 0.75
+      }
+    },
+    "classification_metrics": {
+      "improvement": {
+        "baseline": {
+          "case_count": 2,
+          "evaluated_count": 2,
+          "agreement_count": 0,
+          "agreement_rate": 0.0,
+          "false_positive_count": 0,
+          "false_negative_count": 2,
+          "field_accuracy": {
+            "verdict": 0.0
+          },
+          "predictions": {
+            "REVIEW-002": "CORRECT",
+            "REVIEW-004": "CORRECT"
+          }
+        },
+        "candidate": {
+          "case_count": 2,
+          "evaluated_count": 2,
+          "agreement_count": 2,
+          "agreement_rate": 1.0,
+          "false_positive_count": 0,
+          "false_negative_count": 0,
+          "field_accuracy": {
+            "verdict": 1.0
+          },
+          "predictions": {
+            "REVIEW-002": "INCORRECT",
+            "REVIEW-004": "INCORRECT"
+          }
+        }
+      },
+      "regression": {
+        "baseline": {
+          "case_count": 4,
+          "evaluated_count": 4,
+          "agreement_count": 4,
+          "agreement_rate": 1.0,
+          "false_positive_count": 0,
+          "false_negative_count": 0,
+          "field_accuracy": {
+            "verdict": 1.0
+          },
+          "predictions": {
+            "REVIEW-001": "CORRECT",
+            "REVIEW-003": "CORRECT",
+            "REVIEW-005": "CORRECT",
+            "REVIEW-006": "CORRECT"
+          }
+        },
+        "candidate": {
+          "case_count": 4,
+          "evaluated_count": 4,
+          "agreement_count": 4,
+          "agreement_rate": 1.0,
+          "false_positive_count": 0,
+          "false_negative_count": 0,
+          "field_accuracy": {
+            "verdict": 1.0
+          },
+          "predictions": {
+            "REVIEW-001": "CORRECT",
+            "REVIEW-003": "CORRECT",
+            "REVIEW-005": "CORRECT",
+            "REVIEW-006": "CORRECT"
+          }
+        }
+      },
+      "holdout": {
+        "baseline": {
+          "case_count": 4,
+          "evaluated_count": 4,
+          "agreement_count": 1,
+          "agreement_rate": 0.25,
+          "false_positive_count": 0,
+          "false_negative_count": 3,
+          "field_accuracy": {
+            "verdict": 0.25
+          },
+          "predictions": {
+            "REVIEW-007": "CORRECT",
+            "REVIEW-008": "CORRECT",
+            "REVIEW-009": "CORRECT",
+            "REVIEW-010": "CORRECT"
+          }
+        },
+        "candidate": {
+          "case_count": 4,
+          "evaluated_count": 4,
+          "agreement_count": 3,
+          "agreement_rate": 0.75,
+          "false_positive_count": 0,
+          "false_negative_count": 1,
+          "field_accuracy": {
+            "verdict": 0.75
+          },
+          "predictions": {
+            "REVIEW-007": "INCORRECT",
+            "REVIEW-008": "CORRECT",
+            "REVIEW-009": "CORRECT",
+            "REVIEW-010": "INCORRECT"
+          }
+        }
+      }
+    }
+  }
+}

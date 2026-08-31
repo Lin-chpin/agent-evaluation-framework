@@ -1,0 +1,27 @@
+{
+  "require_regression_pass": true,
+  "max_regression_soft_warning_increase": 0,
+  "max_holdout_hard_pass_drop": 0,
+  "max_holdout_soft_warning_increase": 0,
+  "require_improvement": true,
+  "objectives": [
+    {
+      "name": "quality",
+      "metric": "trace.fields.quality",
+      "direction": "maximize",
+      "aggregation": "mean",
+      "minimum_improvement": 0.1,
+      "maximum_regression": 0,
+      "required": true
+    },
+    {
+      "name": "latency",
+      "metric": "latency_ms",
+      "direction": "minimize",
+      "aggregation": "mean",
+      "minimum_improvement": 0,
+      "maximum_regression": 0,
+      "required": true
+    }
+  ]
+}

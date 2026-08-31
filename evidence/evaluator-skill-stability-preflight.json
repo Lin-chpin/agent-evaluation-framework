@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "experiment_id": "evaluator-skill-stability-qwen3-14b-20260831-local-preflight",
+  "plan_sha256": "657B39C20EDBCD74F404396C25732563A160EA645419F3E8F7C05301165FF955",
+  "status": "environment_blocked",
+  "successful_provider_calls": 0,
+  "provider_usage": {},
+  "error": "WinError 10013: local sandbox denied socket access before a provider response",
+  "classification": "environment preflight failure, not a model stability result"
+}

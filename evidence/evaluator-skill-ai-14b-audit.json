@@ -1,0 +1,81 @@
+{
+  "schema_version": 2,
+  "experiment_id": "evaluator-skill-human-ai-14b-20260831-4",
+  "purpose": "AI-generated evaluator Skill candidate failure-path evidence",
+  "data_classification": "human-reviewed synthetic cases, not real business data",
+  "frozen_dataset_snapshot": {
+    "improvement": "examples/evaluator_skill_human.improvement.jsonl",
+    "regression": "examples/evaluator_skill_human.regression.jsonl",
+    "holdout": "evidence/snapshots/evaluator-skill-ai-14b-holdout.jsonl",
+    "sha256": {
+      "improvement": "D15A669CE696A7587C67C88E49E59D1461859D05F53B710651965820D1C6E031",
+      "regression": "DCEB045F19AFB03824B887431344092A56D3D480A1FF726263B85635BEE109F2",
+      "holdout": "CB532AF6AAF7493613E835DA5EA9A1A61528179CD3B08BE0F6D710DACA06267E"
+    }
+  },
+  "runtime": {
+    "baseline": {"runtime_type": "deterministic", "model": null},
+    "diagnosis_and_candidate_generation": {
+      "runtime_type": "llm",
+      "provider": "SiliconFlow OpenAI-compatible API",
+      "model": "Qwen/Qwen3-14B",
+      "temperature": 0
+    },
+    "candidate_evaluation": {
+      "runtime_type": "deterministic",
+      "reason": "the generated candidate was byte-identical to the deterministic baseline sentinel"
+    },
+    "historical_trace_correction": "The original adapter incorrectly populated the baseline trace model field by reading the configured LLM client. The baseline did not call that model. The adapter now records deterministic and LLM runtimes separately."
+  },
+  "diagnosis": {
+    "evidence_case_ids": ["REVIEW-002", "REVIEW-004"],
+    "summary": "The model identified that the constant-CORRECT evaluator failed both improvement cases.",
+    "evidence_available_to_diagnosis": "complete improvement case results",
+    "evidence_available_to_candidate_in_this_historical_run": "model-compressed diagnosis only",
+    "post_run_fix": "the adapter now forwards structured improvement evidence and rejects regression or holdout evidence in candidate context"
+  },
+  "candidate": {
+    "candidate_id": "ai-round-1-1-662ef7",
+    "candidate_version": "ai-r1-c1-97a4a6",
+    "artifact": "evidence/evaluator-skill-ai-14b-candidate.skill.txt",
+    "historical_sha256": "18ADB57CB6E0D1B6591560FCC9A8F00B7686FB4CF546BF84951D97C19835D6DE",
+    "public_copy_sha256": "EE4D77B4BEFAD4FF0C9133206B6F60A6B5A708F286EDD5F7B2F9A574302278DC",
+    "hash_note": "The text is identical; the historical file used CRLF and the public copy uses LF.",
+    "identical_to_baseline": true
+  },
+  "decision": {
+    "status": "no_acceptable_candidate",
+    "decision": "reject",
+    "reason": "improvement/quality: minimum improvement not met",
+    "baseline_version_before": "ai-defect-v1",
+    "baseline_version_after": "ai-defect-v1",
+    "hard_pass_rates": {
+      "improvement": {"baseline": 0.0, "candidate": 0.0},
+      "regression": {"baseline": 1.0, "candidate": 1.0},
+      "holdout": {"baseline": 0.75, "candidate": 0.75}
+    }
+  },
+  "gold_adjudications_after_experiment": {
+    "cases": [
+      {
+        "case_id": "REVIEW-007",
+        "historical_outcome": "CORRECT",
+        "current_outcome": "PARTIALLY_CORRECT",
+        "current_gate_verdict": "INCORRECT"
+      },
+      {
+        "case_id": "REVIEW-008",
+        "historical_outcome": "CORRECT",
+        "current_outcome": "PARTIALLY_CORRECT",
+        "current_gate_verdict": "INCORRECT"
+      }
+    ],
+    "effect": "The current deterministic baseline holdout rate is 0.25. This does not retroactively alter the historical frozen experiment; both versions are retained."
+  },
+  "supported_conclusion": "The framework rejected an AI-generated no-op candidate and preserved the baseline.",
+  "unsupported_conclusions": [
+    "The AI successfully improved the evaluator Skill.",
+    "The result estimates reliability across repeated runs.",
+    "The synthetic labels prove real-business evaluation quality."
+  ]
+}

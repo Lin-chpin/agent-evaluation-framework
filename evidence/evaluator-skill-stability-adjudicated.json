@@ -1,0 +1,159 @@
+{
+  "schema_version": 1,
+  "kind": "post-experiment gold adjudication rescore",
+  "generated_at": "2026-08-31T02:46:44.854797+00:00",
+  "source_result": "evidence\\evaluator-skill-stability-results.json",
+  "source_result_sha256": "463BA95828FC33D5EF04922C3978DCB798A851651A55D269E04E3F7A4A892F1B",
+  "new_model_calls": 0,
+  "adjudications": [
+    {
+      "case_id": "REVIEW-008",
+      "previous_outcome": "CORRECT",
+      "current_outcome": "PARTIALLY_CORRECT",
+      "current_gate_verdict": "INCORRECT",
+      "reason": "The report changed the explicit fact 'no data loss occurred' into the ambiguous claim 'no data loss was recorded'."
+    }
+  ],
+  "current_datasets": {
+    "improvement": {
+      "path": "examples\\evaluator_skill_human.improvement.jsonl",
+      "sha256": "D15A669CE696A7587C67C88E49E59D1461859D05F53B710651965820D1C6E031"
+    },
+    "regression": {
+      "path": "examples\\evaluator_skill_human.regression.jsonl",
+      "sha256": "DCEB045F19AFB03824B887431344092A56D3D480A1FF726263B85635BEE109F2"
+    },
+    "holdout": {
+      "path": "examples\\evaluator_skill_human.holdout.jsonl",
+      "sha256": "3E5577C612F990C9CBDD3F42DB68EC8F23BB00D834A15B42B59A0F9BE75686E1"
+    }
+  },
+  "per_repetition_metrics": [
+    {
+      "case_count": 10,
+      "evaluated_count": 10,
+      "agreement_count": 10,
+      "agreement_rate": 1.0,
+      "false_positive_count": 0,
+      "false_negative_count": 0,
+      "field_accuracy": {
+        "verdict": 1.0
+      },
+      "predictions": {
+        "REVIEW-002": "INCORRECT",
+        "REVIEW-004": "INCORRECT",
+        "REVIEW-001": "CORRECT",
+        "REVIEW-003": "CORRECT",
+        "REVIEW-005": "CORRECT",
+        "REVIEW-006": "CORRECT",
+        "REVIEW-007": "INCORRECT",
+        "REVIEW-008": "INCORRECT",
+        "REVIEW-009": "CORRECT",
+        "REVIEW-010": "INCORRECT"
+      }
+    },
+    {
+      "case_count": 10,
+      "evaluated_count": 10,
+      "agreement_count": 10,
+      "agreement_rate": 1.0,
+      "false_positive_count": 0,
+      "false_negative_count": 0,
+      "field_accuracy": {
+        "verdict": 1.0
+      },
+      "predictions": {
+        "REVIEW-002": "INCORRECT",
+        "REVIEW-004": "INCORRECT",
+        "REVIEW-001": "CORRECT",
+        "REVIEW-003": "CORRECT",
+        "REVIEW-005": "CORRECT",
+        "REVIEW-006": "CORRECT",
+        "REVIEW-007": "INCORRECT",
+        "REVIEW-008": "INCORRECT",
+        "REVIEW-009": "CORRECT",
+        "REVIEW-010": "INCORRECT"
+      }
+    },
+    {
+      "case_count": 10,
+      "evaluated_count": 10,
+      "agreement_count": 10,
+      "agreement_rate": 1.0,
+      "false_positive_count": 0,
+      "false_negative_count": 0,
+      "field_accuracy": {
+        "verdict": 1.0
+      },
+      "predictions": {
+        "REVIEW-002": "INCORRECT",
+        "REVIEW-004": "INCORRECT",
+        "REVIEW-001": "CORRECT",
+        "REVIEW-003": "CORRECT",
+        "REVIEW-005": "CORRECT",
+        "REVIEW-006": "CORRECT",
+        "REVIEW-007": "INCORRECT",
+        "REVIEW-008": "INCORRECT",
+        "REVIEW-009": "CORRECT",
+        "REVIEW-010": "INCORRECT"
+      }
+    },
+    {
+      "case_count": 10,
+      "evaluated_count": 10,
+      "agreement_count": 10,
+      "agreement_rate": 1.0,
+      "false_positive_count": 0,
+      "false_negative_count": 0,
+      "field_accuracy": {
+        "verdict": 1.0
+      },
+      "predictions": {
+        "REVIEW-002": "INCORRECT",
+        "REVIEW-004": "INCORRECT",
+        "REVIEW-001": "CORRECT",
+        "REVIEW-003": "CORRECT",
+        "REVIEW-005": "CORRECT",
+        "REVIEW-006": "CORRECT",
+        "REVIEW-007": "INCORRECT",
+        "REVIEW-008": "INCORRECT",
+        "REVIEW-009": "CORRECT",
+        "REVIEW-010": "INCORRECT"
+      }
+    },
+    {
+      "case_count": 10,
+      "evaluated_count": 10,
+      "agreement_count": 10,
+      "agreement_rate": 1.0,
+      "false_positive_count": 0,
+      "false_negative_count": 0,
+      "field_accuracy": {
+        "verdict": 1.0
+      },
+      "predictions": {
+        "REVIEW-002": "INCORRECT",
+        "REVIEW-004": "INCORRECT",
+        "REVIEW-001": "CORRECT",
+        "REVIEW-003": "CORRECT",
+        "REVIEW-005": "CORRECT",
+        "REVIEW-006": "CORRECT",
+        "REVIEW-007": "INCORRECT",
+        "REVIEW-008": "INCORRECT",
+        "REVIEW-009": "CORRECT",
+        "REVIEW-010": "INCORRECT"
+      }
+    }
+  ],
+  "repeat_stability": {
+    "run_count": 5,
+    "comparable_case_count": 10,
+    "stable_case_count": 10,
+    "stability_rate": 1.0
+  },
+  "limitations": [
+    "The model outputs are unchanged; only the human gold was adjudicated after the experiment.",
+    "The cases are human-reviewed synthetic cases, not real-business data.",
+    "The adjudicated 100% agreement is descriptive for these ten cases and must not be generalized."
+  ]
+}

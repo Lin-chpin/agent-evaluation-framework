@@ -1,0 +1,1343 @@
+{
+  "schema_version": 1,
+  "experiment_id": "evaluator-skill-stability-qwen3-14b-20260831",
+  "generated_at": "2026-08-31T02:38:00.361320+00:00",
+  "plan": "evidence\\evaluator-skill-stability-plan.json",
+  "plan_sha256": "657B39C20EDBCD74F404396C25732563A160EA645419F3E8F7C05301165FF955",
+  "skill_artifact": "evidence\\evaluator-skill-stability.skill.txt",
+  "skill_sha256": "A507CD99C5C7FC553210F45C7DEDB6F155DFF8E924FEC562B68CE5AFFF56E997",
+  "model": "Qwen/Qwen3-14B",
+  "provider": "siliconflow",
+  "temperature": 0.0,
+  "max_tokens": 128,
+  "automatic_retries": 0,
+  "datasets": {
+    "improvement": {
+      "path": "examples\\evaluator_skill_human.improvement.jsonl",
+      "sha256": "D15A669CE696A7587C67C88E49E59D1461859D05F53B710651965820D1C6E031"
+    },
+    "regression": {
+      "path": "examples\\evaluator_skill_human.regression.jsonl",
+      "sha256": "DCEB045F19AFB03824B887431344092A56D3D480A1FF726263B85635BEE109F2"
+    },
+    "holdout": {
+      "path": "examples\\evaluator_skill_human.holdout.jsonl",
+      "sha256": "89C9F6BF96A5D28AA86794662DE724BE8EDFDA964FCAB9B18F22A4CBD8B182A4"
+    }
+  },
+  "call_budget": 50,
+  "successful_calls": 50,
+  "failed_calls": 0,
+  "availability_rate": 1.0,
+  "provider_usage": {
+    "completion_tokens": 2119,
+    "prompt_cache_hit_tokens": 7872,
+    "prompt_cache_miss_tokens": 1978,
+    "prompt_tokens": 9850,
+    "total_tokens": 11969
+  },
+  "per_repetition_metrics": [
+    {
+      "case_count": 10,
+      "evaluated_count": 10,
+      "agreement_count": 9,
+      "agreement_rate": 0.9,
+      "false_positive_count": 1,
+      "false_negative_count": 0,
+      "field_accuracy": {
+        "verdict": 0.9
+      },
+      "predictions": {
+        "REVIEW-002": "INCORRECT",
+        "REVIEW-004": "INCORRECT",
+        "REVIEW-001": "CORRECT",
+        "REVIEW-003": "CORRECT",
+        "REVIEW-005": "CORRECT",
+        "REVIEW-006": "CORRECT",
+        "REVIEW-007": "INCORRECT",
+        "REVIEW-008": "INCORRECT",
+        "REVIEW-009": "CORRECT",
+        "REVIEW-010": "INCORRECT"
+      }
+    },
+    {
+      "case_count": 10,
+      "evaluated_count": 10,
+      "agreement_count": 9,
+      "agreement_rate": 0.9,
+      "false_positive_count": 1,
+      "false_negative_count": 0,
+      "field_accuracy": {
+        "verdict": 0.9
+      },
+      "predictions": {
+        "REVIEW-002": "INCORRECT",
+        "REVIEW-004": "INCORRECT",
+        "REVIEW-001": "CORRECT",
+        "REVIEW-003": "CORRECT",
+        "REVIEW-005": "CORRECT",
+        "REVIEW-006": "CORRECT",
+        "REVIEW-007": "INCORRECT",
+        "REVIEW-008": "INCORRECT",
+        "REVIEW-009": "CORRECT",
+        "REVIEW-010": "INCORRECT"
+      }
+    },
+    {
+      "case_count": 10,
+      "evaluated_count": 10,
+      "agreement_count": 9,
+      "agreement_rate": 0.9,
+      "false_positive_count": 1,
+      "false_negative_count": 0,
+      "field_accuracy": {
+        "verdict": 0.9
+      },
+      "predictions": {
+        "REVIEW-002": "INCORRECT",
+        "REVIEW-004": "INCORRECT",
+        "REVIEW-001": "CORRECT",
+        "REVIEW-003": "CORRECT",
+        "REVIEW-005": "CORRECT",
+        "REVIEW-006": "CORRECT",
+        "REVIEW-007": "INCORRECT",
+        "REVIEW-008": "INCORRECT",
+        "REVIEW-009": "CORRECT",
+        "REVIEW-010": "INCORRECT"
+      }
+    },
+    {
+      "case_count": 10,
+      "evaluated_count": 10,
+      "agreement_count": 9,
+      "agreement_rate": 0.9,
+      "false_positive_count": 1,
+      "false_negative_count": 0,
+      "field_accuracy": {
+        "verdict": 0.9
+      },
+      "predictions": {
+        "REVIEW-002": "INCORRECT",
+        "REVIEW-004": "INCORRECT",
+        "REVIEW-001": "CORRECT",
+        "REVIEW-003": "CORRECT",
+        "REVIEW-005": "CORRECT",
+        "REVIEW-006": "CORRECT",
+        "REVIEW-007": "INCORRECT",
+        "REVIEW-008": "INCORRECT",
+        "REVIEW-009": "CORRECT",
+        "REVIEW-010": "INCORRECT"
+      }
+    },
+    {
+      "case_count": 10,
+      "evaluated_count": 10,
+      "agreement_count": 9,
+      "agreement_rate": 0.9,
+      "false_positive_count": 1,
+      "false_negative_count": 0,
+      "field_accuracy": {
+        "verdict": 0.9
+      },
+      "predictions": {
+        "REVIEW-002": "INCORRECT",
+        "REVIEW-004": "INCORRECT",
+        "REVIEW-001": "CORRECT",
+        "REVIEW-003": "CORRECT",
+        "REVIEW-005": "CORRECT",
+        "REVIEW-006": "CORRECT",
+        "REVIEW-007": "INCORRECT",
+        "REVIEW-008": "INCORRECT",
+        "REVIEW-009": "CORRECT",
+        "REVIEW-010": "INCORRECT"
+      }
+    }
+  ],
+  "repeat_stability": {
+    "run_count": 5,
+    "comparable_case_count": 10,
+    "stable_case_count": 10,
+    "stability_rate": 1.0
+  },
+  "strict_stable_case_count": 10,
+  "strict_stability_rate": 1.0,
+  "per_case": {
+    "REVIEW-002": {
+      "expected_verdict": "INCORRECT",
+      "successful_calls": 5,
+      "verdicts": [
+        "INCORRECT",
+        "INCORRECT",
+        "INCORRECT",
+        "INCORRECT",
+        "INCORRECT"
+      ],
+      "strictly_stable": true
+    },
+    "REVIEW-004": {
+      "expected_verdict": "INCORRECT",
+      "successful_calls": 5,
+      "verdicts": [
+        "INCORRECT",
+        "INCORRECT",
+        "INCORRECT",
+        "INCORRECT",
+        "INCORRECT"
+      ],
+      "strictly_stable": true
+    },
+    "REVIEW-001": {
+      "expected_verdict": "CORRECT",
+      "successful_calls": 5,
+      "verdicts": [
+        "CORRECT",
+        "CORRECT",
+        "CORRECT",
+        "CORRECT",
+        "CORRECT"
+      ],
+      "strictly_stable": true
+    },
+    "REVIEW-003": {
+      "expected_verdict": "CORRECT",
+      "successful_calls": 5,
+      "verdicts": [
+        "CORRECT",
+        "CORRECT",
+        "CORRECT",
+        "CORRECT",
+        "CORRECT"
+      ],
+      "strictly_stable": true
+    },
+    "REVIEW-005": {
+      "expected_verdict": "CORRECT",
+      "successful_calls": 5,
+      "verdicts": [
+        "CORRECT",
+        "CORRECT",
+        "CORRECT",
+        "CORRECT",
+        "CORRECT"
+      ],
+      "strictly_stable": true
+    },
+    "REVIEW-006": {
+      "expected_verdict": "CORRECT",
+      "successful_calls": 5,
+      "verdicts": [
+        "CORRECT",
+        "CORRECT",
+        "CORRECT",
+        "CORRECT",
+        "CORRECT"
+      ],
+      "strictly_stable": true
+    },
+    "REVIEW-007": {
+      "expected_verdict": "INCORRECT",
+      "successful_calls": 5,
+      "verdicts": [
+        "INCORRECT",
+        "INCORRECT",
+        "INCORRECT",
+        "INCORRECT",
+        "INCORRECT"
+      ],
+      "strictly_stable": true
+    },
+    "REVIEW-008": {
+      "expected_verdict": "CORRECT",
+      "successful_calls": 5,
+      "verdicts": [
+        "INCORRECT",
+        "INCORRECT",
+        "INCORRECT",
+        "INCORRECT",
+        "INCORRECT"
+      ],
+      "strictly_stable": true
+    },
+    "REVIEW-009": {
+      "expected_verdict": "CORRECT",
+      "successful_calls": 5,
+      "verdicts": [
+        "CORRECT",
+        "CORRECT",
+        "CORRECT",
+        "CORRECT",
+        "CORRECT"
+      ],
+      "strictly_stable": true
+    },
+    "REVIEW-010": {
+      "expected_verdict": "INCORRECT",
+      "successful_calls": 5,
+      "verdicts": [
+        "INCORRECT",
+        "INCORRECT",
+        "INCORRECT",
+        "INCORRECT",
+        "INCORRECT"
+      ],
+      "strictly_stable": true
+    }
+  },
+  "calls": [
+    {
+      "repetition": 1,
+      "case_id": "REVIEW-002",
+      "expected_verdict": "INCORRECT",
+      "status": "success",
+      "verdict": "INCORRECT",
+      "reason": "The evaluation report fails to recognize that the agent's answer incorrectly states the remaining amount to be paid.",
+      "usage": {
+        "prompt_tokens": 193,
+        "completion_tokens": 37,
+        "total_tokens": 230,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "prompt_cache_hit_tokens": 0,
+        "prompt_cache_miss_tokens": 193
+      }
+    },
+    {
+      "repetition": 1,
+      "case_id": "REVIEW-004",
+      "expected_verdict": "INCORRECT",
+      "status": "success",
+      "verdict": "INCORRECT",
+      "reason": "The evaluation report fails to consider the risk score condition, which is required for the application to be approved.",
+      "usage": {
+        "prompt_tokens": 192,
+        "completion_tokens": 38,
+        "total_tokens": 230,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 128
+        },
+        "prompt_cache_hit_tokens": 128,
+        "prompt_cache_miss_tokens": 64
+      }
+    },
+    {
+      "repetition": 1,
+      "case_id": "REVIEW-001",
+      "expected_verdict": "CORRECT",
+      "status": "success",
+      "verdict": "CORRECT",
+      "reason": "The evaluation report correctly identifies that the user meets the full refund conditions based on the facts provided.",
+      "usage": {
+        "prompt_tokens": 195,
+        "completion_tokens": 35,
+        "total_tokens": 230,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 128
+        },
+        "prompt_cache_hit_tokens": 128,
+        "prompt_cache_miss_tokens": 67
+      }
+    },
+    {
+      "repetition": 1,
+      "case_id": "REVIEW-003",
+      "expected_verdict": "CORRECT",
+      "status": "success",
+      "verdict": "CORRECT",
+      "reason": "评价报告正确指出执行人信息缺乏证据支持，符合事实描述。",
+      "usage": {
+        "prompt_tokens": 197,
+        "completion_tokens": 32,
+        "total_tokens": 229,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "prompt_cache_hit_tokens": 0,
+        "prompt_cache_miss_tokens": 197
+      }
+    },
+    {
+      "repetition": 1,
+      "case_id": "REVIEW-005",
+      "expected_verdict": "CORRECT",
+      "status": "success",
+      "verdict": "CORRECT",
+      "reason": "The evaluation report correctly identifies that the agent's answer matches the facts provided.",
+      "usage": {
+        "prompt_tokens": 204,
+        "completion_tokens": 31,
+        "total_tokens": 235,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 128
+        },
+        "prompt_cache_hit_tokens": 128,
+        "prompt_cache_miss_tokens": 76
+      }
+    },
+    {
+      "repetition": 1,
+      "case_id": "REVIEW-006",
+      "expected_verdict": "CORRECT",
+      "status": "success",
+      "verdict": "CORRECT",
+      "reason": "评价报告正确指出了代理的回答错误地将处理时间限定为3个工作日，忽略了原事实中提到的高峰期可能延长的情况。",
+      "usage": {
+        "prompt_tokens": 188,
+        "completion_tokens": 45,
+        "total_tokens": 233,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 128
+        },
+        "prompt_cache_hit_tokens": 128,
+        "prompt_cache_miss_tokens": 60
+      }
+    },
+    {
+      "repetition": 1,
+      "case_id": "REVIEW-007",
+      "expected_verdict": "INCORRECT",
+      "status": "success",
+      "verdict": "INCORRECT",
+      "reason": "The evaluation report incorrectly accepts the Agent's answer which falsely claims PDF export is supported, despite the facts explicitly stating it is not.",
+      "usage": {
+        "prompt_tokens": 189,
+        "completion_tokens": 43,
+        "total_tokens": 232,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 128
+        },
+        "prompt_cache_hit_tokens": 128,
+        "prompt_cache_miss_tokens": 61
+      }
+    },
+    {
+      "repetition": 1,
+      "case_id": "REVIEW-008",
+      "expected_verdict": "CORRECT",
+      "status": "success",
+      "verdict": "INCORRECT",
+      "reason": "The evaluation report fails to note that the Agent answer incorrectly states '没有证据表明发生数据丢失' (no evidence indicates data loss) instead of the fact that '没有发生数据丢失' (no data loss occurred).",
+      "usage": {
+        "prompt_tokens": 214,
+        "completion_tokens": 62,
+        "total_tokens": 276,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 128
+        },
+        "prompt_cache_hit_tokens": 128,
+        "prompt_cache_miss_tokens": 86
+      }
+    },
+    {
+      "repetition": 1,
+      "case_id": "REVIEW-009",
+      "expected_verdict": "CORRECT",
+      "status": "success",
+      "verdict": "CORRECT",
+      "reason": "The evaluation report correctly identifies that the agent's answer contains a logical error by equating content modification rights with project deletion rights.",
+      "usage": {
+        "prompt_tokens": 195,
+        "completion_tokens": 41,
+        "total_tokens": 236,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 128
+        },
+        "prompt_cache_hit_tokens": 128,
+        "prompt_cache_miss_tokens": 67
+      }
+    },
+    {
+      "repetition": 1,
+      "case_id": "REVIEW-010",
+      "expected_verdict": "INCORRECT",
+      "status": "success",
+      "verdict": "INCORRECT",
+      "reason": "The evaluation report incorrectly concludes that the new scheme has been proven to stably improve success rate without considering the lack of confidence intervals or statistical significance testing.",
+      "usage": {
+        "prompt_tokens": 203,
+        "completion_tokens": 47,
+        "total_tokens": 250,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 128
+        },
+        "prompt_cache_hit_tokens": 128,
+        "prompt_cache_miss_tokens": 75
+      }
+    },
+    {
+      "repetition": 2,
+      "case_id": "REVIEW-002",
+      "expected_verdict": "INCORRECT",
+      "status": "success",
+      "verdict": "INCORRECT",
+      "reason": "The evaluation report fails to recognize that the agent's answer incorrectly states the remaining amount to be paid.",
+      "usage": {
+        "prompt_tokens": 193,
+        "completion_tokens": 37,
+        "total_tokens": 230,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 128
+        },
+        "prompt_cache_hit_tokens": 128,
+        "prompt_cache_miss_tokens": 65
+      }
+    },
+    {
+      "repetition": 2,
+      "case_id": "REVIEW-004",
+      "expected_verdict": "INCORRECT",
+      "status": "success",
+      "verdict": "INCORRECT",
+      "reason": "The evaluation report fails to consider the risk score condition, which is required for the application to be approved.",
+      "usage": {
+        "prompt_tokens": 192,
+        "completion_tokens": 38,
+        "total_tokens": 230,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 128
+        },
+        "prompt_cache_hit_tokens": 128,
+        "prompt_cache_miss_tokens": 64
+      }
+    },
+    {
+      "repetition": 2,
+      "case_id": "REVIEW-001",
+      "expected_verdict": "CORRECT",
+      "status": "success",
+      "verdict": "CORRECT",
+      "reason": "The evaluation report correctly identifies that the user's request falls within the 7-day refund window and that the service has not been used, aligning with the facts provided.",
+      "usage": {
+        "prompt_tokens": 195,
+        "completion_tokens": 50,
+        "total_tokens": 245,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 128
+        },
+        "prompt_cache_hit_tokens": 128,
+        "prompt_cache_miss_tokens": 67
+      }
+    },
+    {
+      "repetition": 2,
+      "case_id": "REVIEW-003",
+      "expected_verdict": "CORRECT",
+      "status": "success",
+      "verdict": "CORRECT",
+      "reason": "评价报告正确指出执行人信息缺乏证据支持，符合事实描述。",
+      "usage": {
+        "prompt_tokens": 197,
+        "completion_tokens": 32,
+        "total_tokens": 229,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 192
+        },
+        "prompt_cache_hit_tokens": 192,
+        "prompt_cache_miss_tokens": 5
+      }
+    },
+    {
+      "repetition": 2,
+      "case_id": "REVIEW-005",
+      "expected_verdict": "CORRECT",
+      "status": "success",
+      "verdict": "CORRECT",
+      "reason": "The evaluation report accurately confirms that the agent's answer matches the provided facts in terms of time, participants, and location status.",
+      "usage": {
+        "prompt_tokens": 204,
+        "completion_tokens": 41,
+        "total_tokens": 245,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 128
+        },
+        "prompt_cache_hit_tokens": 128,
+        "prompt_cache_miss_tokens": 76
+      }
+    },
+    {
+      "repetition": 2,
+      "case_id": "REVIEW-006",
+      "expected_verdict": "CORRECT",
+      "status": "success",
+      "verdict": "CORRECT",
+      "reason": "评价报告正确指出了回答将处理时间范围错误地限定为固定上限，并遗漏了高峰期可能延长的情况。",
+      "usage": {
+        "prompt_tokens": 188,
+        "completion_tokens": 41,
+        "total_tokens": 229,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 160
+        },
+        "prompt_cache_hit_tokens": 160,
+        "prompt_cache_miss_tokens": 28
+      }
+    },
+    {
+      "repetition": 2,
+      "case_id": "REVIEW-007",
+      "expected_verdict": "INCORRECT",
+      "status": "success",
+      "verdict": "INCORRECT",
+      "reason": "The evaluation report incorrectly accepts the Agent's answer which falsely claims PDF export is supported, despite the facts explicitly stating it is not.",
+      "usage": {
+        "prompt_tokens": 189,
+        "completion_tokens": 43,
+        "total_tokens": 232,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 160
+        },
+        "prompt_cache_hit_tokens": 160,
+        "prompt_cache_miss_tokens": 29
+      }
+    },
+    {
+      "repetition": 2,
+      "case_id": "REVIEW-008",
+      "expected_verdict": "CORRECT",
+      "status": "success",
+      "verdict": "INCORRECT",
+      "reason": "The evaluation report fails to note that the Agent answer incorrectly states '没有证据表明发生数据丢失' instead of the fact that '没有发生数据丢失'.",
+      "usage": {
+        "prompt_tokens": 214,
+        "completion_tokens": 49,
+        "total_tokens": 263,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 192
+        },
+        "prompt_cache_hit_tokens": 192,
+        "prompt_cache_miss_tokens": 22
+      }
+    },
+    {
+      "repetition": 2,
+      "case_id": "REVIEW-009",
+      "expected_verdict": "CORRECT",
+      "status": "success",
+      "verdict": "CORRECT",
+      "reason": "The evaluation report correctly identifies that the agent's claim is incorrect by pointing out the distinction between content modification and project deletion permissions.",
+      "usage": {
+        "prompt_tokens": 195,
+        "completion_tokens": 41,
+        "total_tokens": 236,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 128
+        },
+        "prompt_cache_hit_tokens": 128,
+        "prompt_cache_miss_tokens": 67
+      }
+    },
+    {
+      "repetition": 2,
+      "case_id": "REVIEW-010",
+      "expected_verdict": "INCORRECT",
+      "status": "success",
+      "verdict": "INCORRECT",
+      "reason": "The evaluation report incorrectly concludes that the new scheme has been proven to stably improve success rate without considering the lack of confidence intervals or statistical significance testing.",
+      "usage": {
+        "prompt_tokens": 203,
+        "completion_tokens": 47,
+        "total_tokens": 250,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 192
+        },
+        "prompt_cache_hit_tokens": 192,
+        "prompt_cache_miss_tokens": 11
+      }
+    },
+    {
+      "repetition": 3,
+      "case_id": "REVIEW-002",
+      "expected_verdict": "INCORRECT",
+      "status": "success",
+      "verdict": "INCORRECT",
+      "reason": "The evaluation report fails to recognize that the agent's answer incorrectly states the remaining amount to be paid.",
+      "usage": {
+        "prompt_tokens": 193,
+        "completion_tokens": 37,
+        "total_tokens": 230,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 192
+        },
+        "prompt_cache_hit_tokens": 192,
+        "prompt_cache_miss_tokens": 1
+      }
+    },
+    {
+      "repetition": 3,
+      "case_id": "REVIEW-004",
+      "expected_verdict": "INCORRECT",
+      "status": "success",
+      "verdict": "INCORRECT",
+      "reason": "The evaluation report fails to consider the risk score condition, which is required for the application to be approved.",
+      "usage": {
+        "prompt_tokens": 192,
+        "completion_tokens": 38,
+        "total_tokens": 230,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 160
+        },
+        "prompt_cache_hit_tokens": 160,
+        "prompt_cache_miss_tokens": 32
+      }
+    },
+    {
+      "repetition": 3,
+      "case_id": "REVIEW-001",
+      "expected_verdict": "CORRECT",
+      "status": "success",
+      "verdict": "CORRECT",
+      "reason": "The evaluation report correctly identifies that the user's request falls within the 7-day refund window and that the service has not been used, aligning with the facts provided.",
+      "usage": {
+        "prompt_tokens": 195,
+        "completion_tokens": 50,
+        "total_tokens": 245,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 192
+        },
+        "prompt_cache_hit_tokens": 192,
+        "prompt_cache_miss_tokens": 3
+      }
+    },
+    {
+      "repetition": 3,
+      "case_id": "REVIEW-003",
+      "expected_verdict": "CORRECT",
+      "status": "success",
+      "verdict": "CORRECT",
+      "reason": "评价报告正确指出执行人信息缺乏证据支持，符合事实描述。",
+      "usage": {
+        "prompt_tokens": 197,
+        "completion_tokens": 32,
+        "total_tokens": 229,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 192
+        },
+        "prompt_cache_hit_tokens": 192,
+        "prompt_cache_miss_tokens": 5
+      }
+    },
+    {
+      "repetition": 3,
+      "case_id": "REVIEW-005",
+      "expected_verdict": "CORRECT",
+      "status": "success",
+      "verdict": "CORRECT",
+      "reason": "The evaluation report correctly identifies that the agent's answer matches the facts provided.",
+      "usage": {
+        "prompt_tokens": 204,
+        "completion_tokens": 31,
+        "total_tokens": 235,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 192
+        },
+        "prompt_cache_hit_tokens": 192,
+        "prompt_cache_miss_tokens": 12
+      }
+    },
+    {
+      "repetition": 3,
+      "case_id": "REVIEW-006",
+      "expected_verdict": "CORRECT",
+      "status": "success",
+      "verdict": "CORRECT",
+      "reason": "评价报告正确指出了回答将处理时间范围错误地限定为固定上限，并遗漏了高峰期可能延长的情况。",
+      "usage": {
+        "prompt_tokens": 188,
+        "completion_tokens": 41,
+        "total_tokens": 229,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 160
+        },
+        "prompt_cache_hit_tokens": 160,
+        "prompt_cache_miss_tokens": 28
+      }
+    },
+    {
+      "repetition": 3,
+      "case_id": "REVIEW-007",
+      "expected_verdict": "INCORRECT",
+      "status": "success",
+      "verdict": "INCORRECT",
+      "reason": "The evaluation report incorrectly accepts the Agent's answer which falsely claims PDF export is supported, despite the facts explicitly stating it is not.",
+      "usage": {
+        "prompt_tokens": 189,
+        "completion_tokens": 43,
+        "total_tokens": 232,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 160
+        },
+        "prompt_cache_hit_tokens": 160,
+        "prompt_cache_miss_tokens": 29
+      }
+    },
+    {
+      "repetition": 3,
+      "case_id": "REVIEW-008",
+      "expected_verdict": "CORRECT",
+      "status": "success",
+      "verdict": "INCORRECT",
+      "reason": "The evaluation report fails to note that the Agent answer incorrectly states '没有证据表明发生数据丢失' (no evidence indicates data loss) instead of the fact that '没有发生数据丢失' (no data loss occurred).",
+      "usage": {
+        "prompt_tokens": 214,
+        "completion_tokens": 62,
+        "total_tokens": 276,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 192
+        },
+        "prompt_cache_hit_tokens": 192,
+        "prompt_cache_miss_tokens": 22
+      }
+    },
+    {
+      "repetition": 3,
+      "case_id": "REVIEW-009",
+      "expected_verdict": "CORRECT",
+      "status": "success",
+      "verdict": "CORRECT",
+      "reason": "The evaluation report correctly identifies that the agent's claim is incorrect by pointing out the distinction between content modification and project deletion permissions.",
+      "usage": {
+        "prompt_tokens": 195,
+        "completion_tokens": 41,
+        "total_tokens": 236,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 192
+        },
+        "prompt_cache_hit_tokens": 192,
+        "prompt_cache_miss_tokens": 3
+      }
+    },
+    {
+      "repetition": 3,
+      "case_id": "REVIEW-010",
+      "expected_verdict": "INCORRECT",
+      "status": "success",
+      "verdict": "INCORRECT",
+      "reason": "The evaluation report incorrectly concludes that the new scheme has 'stably proven' to improve success rate without considering the lack of confidence intervals or statistical significance testing, which are necessary to determine stability of the effect.",
+      "usage": {
+        "prompt_tokens": 203,
+        "completion_tokens": 58,
+        "total_tokens": 261,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 192
+        },
+        "prompt_cache_hit_tokens": 192,
+        "prompt_cache_miss_tokens": 11
+      }
+    },
+    {
+      "repetition": 4,
+      "case_id": "REVIEW-002",
+      "expected_verdict": "INCORRECT",
+      "status": "success",
+      "verdict": "INCORRECT",
+      "reason": "The evaluation report incorrectly accepts the answer as correct when the agent's statement contradicts the provided facts.",
+      "usage": {
+        "prompt_tokens": 193,
+        "completion_tokens": 37,
+        "total_tokens": 230,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 192
+        },
+        "prompt_cache_hit_tokens": 192,
+        "prompt_cache_miss_tokens": 1
+      }
+    },
+    {
+      "repetition": 4,
+      "case_id": "REVIEW-004",
+      "expected_verdict": "INCORRECT",
+      "status": "success",
+      "verdict": "INCORRECT",
+      "reason": "The evaluation report fails to consider the risk score condition, which is required for the application to be approved.",
+      "usage": {
+        "prompt_tokens": 192,
+        "completion_tokens": 38,
+        "total_tokens": 230,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 160
+        },
+        "prompt_cache_hit_tokens": 160,
+        "prompt_cache_miss_tokens": 32
+      }
+    },
+    {
+      "repetition": 4,
+      "case_id": "REVIEW-001",
+      "expected_verdict": "CORRECT",
+      "status": "success",
+      "verdict": "CORRECT",
+      "reason": "The evaluation report correctly identifies that the user meets the full refund conditions based on the provided facts.",
+      "usage": {
+        "prompt_tokens": 195,
+        "completion_tokens": 35,
+        "total_tokens": 230,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 192
+        },
+        "prompt_cache_hit_tokens": 192,
+        "prompt_cache_miss_tokens": 3
+      }
+    },
+    {
+      "repetition": 4,
+      "case_id": "REVIEW-003",
+      "expected_verdict": "CORRECT",
+      "status": "success",
+      "verdict": "CORRECT",
+      "reason": "The evaluation report correctly identifies that the completion time is supported by the facts, but the execution person is not mentioned in the system records.",
+      "usage": {
+        "prompt_tokens": 197,
+        "completion_tokens": 43,
+        "total_tokens": 240,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 128
+        },
+        "prompt_cache_hit_tokens": 128,
+        "prompt_cache_miss_tokens": 69
+      }
+    },
+    {
+      "repetition": 4,
+      "case_id": "REVIEW-005",
+      "expected_verdict": "CORRECT",
+      "status": "success",
+      "verdict": "CORRECT",
+      "reason": "The evaluation report accurately confirms that the agent's answer matches the provided facts in terms of time, participants, and location status.",
+      "usage": {
+        "prompt_tokens": 204,
+        "completion_tokens": 41,
+        "total_tokens": 245,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 192
+        },
+        "prompt_cache_hit_tokens": 192,
+        "prompt_cache_miss_tokens": 12
+      }
+    },
+    {
+      "repetition": 4,
+      "case_id": "REVIEW-006",
+      "expected_verdict": "CORRECT",
+      "status": "success",
+      "verdict": "CORRECT",
+      "reason": "评价报告正确指出了回答将处理时间范围错误地限定为固定上限，并遗漏了高峰期可能延长的情况。",
+      "usage": {
+        "prompt_tokens": 188,
+        "completion_tokens": 41,
+        "total_tokens": 229,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 128
+        },
+        "prompt_cache_hit_tokens": 128,
+        "prompt_cache_miss_tokens": 60
+      }
+    },
+    {
+      "repetition": 4,
+      "case_id": "REVIEW-007",
+      "expected_verdict": "INCORRECT",
+      "status": "success",
+      "verdict": "INCORRECT",
+      "reason": "The evaluation report incorrectly accepts the Agent's answer which falsely claims PDF export is supported, despite the facts explicitly stating it is not.",
+      "usage": {
+        "prompt_tokens": 189,
+        "completion_tokens": 43,
+        "total_tokens": 232,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 160
+        },
+        "prompt_cache_hit_tokens": 160,
+        "prompt_cache_miss_tokens": 29
+      }
+    },
+    {
+      "repetition": 4,
+      "case_id": "REVIEW-008",
+      "expected_verdict": "CORRECT",
+      "status": "success",
+      "verdict": "INCORRECT",
+      "reason": "The evaluation report fails to note that the Agent answer incorrectly states '没有证据表明发生数据丢失' (no evidence of data loss) instead of the fact that '没有发生数据丢失' (no data loss occurred).",
+      "usage": {
+        "prompt_tokens": 214,
+        "completion_tokens": 62,
+        "total_tokens": 276,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 192
+        },
+        "prompt_cache_hit_tokens": 192,
+        "prompt_cache_miss_tokens": 22
+      }
+    },
+    {
+      "repetition": 4,
+      "case_id": "REVIEW-009",
+      "expected_verdict": "CORRECT",
+      "status": "success",
+      "verdict": "CORRECT",
+      "reason": "The evaluation report correctly identifies that the agent's answer contains a factual error by pointing out that editing permissions do not equate to deletion permissions.",
+      "usage": {
+        "prompt_tokens": 195,
+        "completion_tokens": 44,
+        "total_tokens": 239,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 192
+        },
+        "prompt_cache_hit_tokens": 192,
+        "prompt_cache_miss_tokens": 3
+      }
+    },
+    {
+      "repetition": 4,
+      "case_id": "REVIEW-010",
+      "expected_verdict": "INCORRECT",
+      "status": "success",
+      "verdict": "INCORRECT",
+      "reason": "The evaluation report incorrectly concludes that the new scheme has been proven to stably improve success rate without considering the lack of confidence intervals or statistical significance testing.",
+      "usage": {
+        "prompt_tokens": 203,
+        "completion_tokens": 47,
+        "total_tokens": 250,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 192
+        },
+        "prompt_cache_hit_tokens": 192,
+        "prompt_cache_miss_tokens": 11
+      }
+    },
+    {
+      "repetition": 5,
+      "case_id": "REVIEW-002",
+      "expected_verdict": "INCORRECT",
+      "status": "success",
+      "verdict": "INCORRECT",
+      "reason": "The evaluation report incorrectly accepts the answer as correct when the agent's statement contradicts the provided facts.",
+      "usage": {
+        "prompt_tokens": 193,
+        "completion_tokens": 37,
+        "total_tokens": 230,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 192
+        },
+        "prompt_cache_hit_tokens": 192,
+        "prompt_cache_miss_tokens": 1
+      }
+    },
+    {
+      "repetition": 5,
+      "case_id": "REVIEW-004",
+      "expected_verdict": "INCORRECT",
+      "status": "success",
+      "verdict": "INCORRECT",
+      "reason": "The evaluation report fails to consider the risk score condition, which is also required for the application to be approved.",
+      "usage": {
+        "prompt_tokens": 192,
+        "completion_tokens": 39,
+        "total_tokens": 231,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 160
+        },
+        "prompt_cache_hit_tokens": 160,
+        "prompt_cache_miss_tokens": 32
+      }
+    },
+    {
+      "repetition": 5,
+      "case_id": "REVIEW-001",
+      "expected_verdict": "CORRECT",
+      "status": "success",
+      "verdict": "CORRECT",
+      "reason": "The evaluation report correctly identifies that the user's request falls within the 7-day refund window and that the service has not been used, aligning with the facts provided.",
+      "usage": {
+        "prompt_tokens": 195,
+        "completion_tokens": 50,
+        "total_tokens": 245,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 192
+        },
+        "prompt_cache_hit_tokens": 192,
+        "prompt_cache_miss_tokens": 3
+      }
+    },
+    {
+      "repetition": 5,
+      "case_id": "REVIEW-003",
+      "expected_verdict": "CORRECT",
+      "status": "success",
+      "verdict": "CORRECT",
+      "reason": "评价报告正确指出执行人信息缺乏证据支持，符合事实描述。",
+      "usage": {
+        "prompt_tokens": 197,
+        "completion_tokens": 32,
+        "total_tokens": 229,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 192
+        },
+        "prompt_cache_hit_tokens": 192,
+        "prompt_cache_miss_tokens": 5
+      }
+    },
+    {
+      "repetition": 5,
+      "case_id": "REVIEW-005",
+      "expected_verdict": "CORRECT",
+      "status": "success",
+      "verdict": "CORRECT",
+      "reason": "The evaluation report correctly identifies that the agent's answer matches the facts in terms of time, participants, and location status.",
+      "usage": {
+        "prompt_tokens": 204,
+        "completion_tokens": 40,
+        "total_tokens": 244,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 192
+        },
+        "prompt_cache_hit_tokens": 192,
+        "prompt_cache_miss_tokens": 12
+      }
+    },
+    {
+      "repetition": 5,
+      "case_id": "REVIEW-006",
+      "expected_verdict": "CORRECT",
+      "status": "success",
+      "verdict": "CORRECT",
+      "reason": "评价报告正确指出了回答将处理时间范围错误地限定为固定上限，并遗漏了高峰期可能延长的情况。",
+      "usage": {
+        "prompt_tokens": 188,
+        "completion_tokens": 41,
+        "total_tokens": 229,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 160
+        },
+        "prompt_cache_hit_tokens": 160,
+        "prompt_cache_miss_tokens": 28
+      }
+    },
+    {
+      "repetition": 5,
+      "case_id": "REVIEW-007",
+      "expected_verdict": "INCORRECT",
+      "status": "success",
+      "verdict": "INCORRECT",
+      "reason": "The evaluation report incorrectly accepts the Agent's answer which falsely claims PDF export is supported, despite the facts explicitly stating it is not.",
+      "usage": {
+        "prompt_tokens": 189,
+        "completion_tokens": 43,
+        "total_tokens": 232,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 160
+        },
+        "prompt_cache_hit_tokens": 160,
+        "prompt_cache_miss_tokens": 29
+      }
+    },
+    {
+      "repetition": 5,
+      "case_id": "REVIEW-008",
+      "expected_verdict": "CORRECT",
+      "status": "success",
+      "verdict": "INCORRECT",
+      "reason": "The evaluation report fails to note that the Agent answer incorrectly states '没有证据表明发生数据丢失' instead of the fact that '没有发生数据丢失'.",
+      "usage": {
+        "prompt_tokens": 214,
+        "completion_tokens": 49,
+        "total_tokens": 263,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 128
+        },
+        "prompt_cache_hit_tokens": 128,
+        "prompt_cache_miss_tokens": 86
+      }
+    },
+    {
+      "repetition": 5,
+      "case_id": "REVIEW-009",
+      "expected_verdict": "CORRECT",
+      "status": "success",
+      "verdict": "CORRECT",
+      "reason": "The evaluation report correctly identifies that editing content does not equate to having the permission to delete projects.",
+      "usage": {
+        "prompt_tokens": 195,
+        "completion_tokens": 36,
+        "total_tokens": 231,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 192
+        },
+        "prompt_cache_hit_tokens": 192,
+        "prompt_cache_miss_tokens": 3
+      }
+    },
+    {
+      "repetition": 5,
+      "case_id": "REVIEW-010",
+      "expected_verdict": "INCORRECT",
+      "status": "success",
+      "verdict": "INCORRECT",
+      "reason": "The evaluation report incorrectly concludes that the new scheme has 'stably proven' to improve success rate without considering the lack of confidence intervals or statistical significance testing, which are necessary to determine stability of the effect.",
+      "usage": {
+        "prompt_tokens": 203,
+        "completion_tokens": 58,
+        "total_tokens": 261,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 192
+        },
+        "prompt_cache_hit_tokens": 192,
+        "prompt_cache_miss_tokens": 11
+      }
+    }
+  ],
+  "limitations": [
+    "The ten cases are human-reviewed synthetic cases, not real-business data.",
+    "Repeated decisions for the same case are correlated and are not fifty independent business samples.",
+    "This experiment measures one frozen Skill and model configuration; it does not estimate all-model reliability."
+  ]
+}

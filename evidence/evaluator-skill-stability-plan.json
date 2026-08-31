@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "experiment_id": "evaluator-skill-stability-qwen3-14b-20260831",
+  "purpose": "Measure repeated scoring stability of one frozen evaluator Skill",
+  "model": "Qwen/Qwen3-14B",
+  "provider": "SiliconFlow OpenAI-compatible API",
+  "temperature": 0,
+  "max_output_tokens_per_call": 128,
+  "repetitions": 5,
+  "case_count_per_repetition": 10,
+  "maximum_scoring_calls": 50,
+  "automatic_retries": 0,
+  "candidate_generation_calls": 0,
+  "datasets": [
+    "examples/evaluator_skill_human.improvement.jsonl",
+    "examples/evaluator_skill_human.regression.jsonl",
+    "examples/evaluator_skill_human.holdout.jsonl"
+  ],
+  "skill_artifact": "evidence/evaluator-skill-stability.skill.txt",
+  "reporting_rules": [
+    "Preserve every successful verdict and every API or parsing failure.",
+    "A case is strictly stable only if all five calls succeed and return the same verdict.",
+    "Report agreement with human gold separately from repeat stability.",
+    "Do not describe this synthetic ten-case experiment as real-business validation."
+  ]
+}

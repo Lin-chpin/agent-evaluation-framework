@@ -1,0 +1,59 @@
+{
+  "schema_version": 3,
+  "experiment_id": "evaluator-skill-human-ai-14b-20260831-4",
+  "date": "2026-08-31",
+  "purpose": "human-reviewed synthetic evaluator Skill evolution failure-path test",
+  "data": {
+    "kind": "human-reviewed synthetic cases",
+    "real_business_data": false,
+    "improvement_cases": 2,
+    "regression_cases": 4,
+    "holdout_cases": 4
+  },
+  "evolver": {
+    "provider_interface": "SiliconFlow OpenAI-compatible API",
+    "model": "Qwen/Qwen3-14B",
+    "diagnosis_calls": 1,
+    "candidate_generation_calls": 1
+  },
+  "result": {
+    "status": "no_acceptable_candidate",
+    "decision": "reject",
+    "initial_version": "ai-defect-v1",
+    "current_version": "ai-defect-v1",
+    "candidate_id": "ai-round-1-1-662ef7",
+    "candidate_version": "ai-r1-c1-97a4a6",
+    "reason": "improvement/quality: minimum improvement not met",
+    "candidate_identical_to_baseline": true,
+    "improvement": {"baseline_hard_pass_rate": 0.0, "candidate_hard_pass_rate": 0.0},
+    "regression": {"baseline_hard_pass_rate": 1.0, "candidate_hard_pass_rate": 1.0},
+    "holdout": {"baseline_hard_pass_rate": 0.75, "candidate_hard_pass_rate": 0.75}
+  },
+  "public_audit": "evidence/evaluator-skill-ai-14b-audit.json",
+  "gold_adjudications_after_experiment": {
+    "cases": ["REVIEW-007", "REVIEW-008"],
+    "historical_outcomes": ["CORRECT", "CORRECT"],
+    "current_outcomes": ["PARTIALLY_CORRECT", "PARTIALLY_CORRECT"],
+    "current_gate_verdicts": ["INCORRECT", "INCORRECT"],
+    "historical_holdout_snapshot": "evidence/snapshots/evaluator-skill-ai-14b-holdout.jsonl",
+    "current_deterministic_baseline_holdout_rate": 0.25
+  },
+  "sha256": {
+    "full_local_audit": "9160507F5D85A365D8383656D083EE818BB087B0FB21D314BCC808ADF0ADEB8A",
+    "candidate_artifact": "18ADB57CB6E0D1B6591560FCC9A8F00B7686FB4CF546BF84951D97C19835D6DE",
+    "improvement_dataset": "D15A669CE696A7587C67C88E49E59D1461859D05F53B710651965820D1C6E031",
+    "regression_dataset": "DCEB045F19AFB03824B887431344092A56D3D480A1FF726263B85635BEE109F2",
+    "holdout_dataset": "CB532AF6AAF7493613E835DA5EA9A1A61528179CD3B08BE0F6D710DACA06267E"
+  },
+  "preflight_history": [
+    "The first run recorded local network denial followed by a 403 for an unavailable model and is not an experiment result.",
+    "Two fixture-validation runs found no observable baseline failure because the model corrected the deliberately weak prompt; they did not call the Evolver.",
+    "The valid run used a deterministic known-defect baseline and allowed AI to generate the replacement Skill candidate."
+  ],
+  "limitations": [
+    "This is one run and not a reliability estimate.",
+    "The cases are synthetic even though the review labels were supplied by a human.",
+    "The result proves rejection of a no-op candidate, not successful evaluator Skill improvement.",
+    "The original full audit remains local; a sanitized public audit preserves the diagnosis, candidate, runtime correction, dataset snapshot, decision, and limitations."
+  ]
+}

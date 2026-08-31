@@ -1,0 +1,23 @@
+{
+  "require_regression_pass": true,
+  "max_holdout_hard_pass_drop": 0.05,
+  "require_improvement": true,
+  "scenario_gates": [
+    {
+      "scenario": "high-risk",
+      "roles": ["regression", "holdout"],
+      "minimum_case_count": 5,
+      "minimum_hard_pass_rate": 1.0,
+      "maximum_hard_pass_rate_drop": 0,
+      "maximum_soft_warning_increase": 0
+    },
+    {
+      "scenario": "standard",
+      "roles": ["holdout"],
+      "minimum_case_count": 20,
+      "minimum_hard_pass_rate": 0.95,
+      "maximum_hard_pass_rate_drop": 0.02,
+      "maximum_soft_warning_increase": 0
+    }
+  ]
+}

@@ -1,0 +1,135 @@
+{
+  "schema_version": 1,
+  "date": "2026-08-30",
+  "purpose": "three preregistered independent repeats of the controlled AI Prompt evolution mechanism",
+  "external_system": "ai-health-assistant",
+  "historical_reproducibility": {
+    "public_summary": true,
+    "full_audits_public": false,
+    "source_revision_recorded_at_run": false,
+    "target_artifact_sha256_recorded_at_run": false,
+    "bit_for_bit_external_reproduction": false
+  },
+  "data": {
+    "kind": "synthetic cases",
+    "real_patient_data": false,
+    "improvement_cases": 4,
+    "regression_cases": 8,
+    "holdout_cases": 8
+  },
+  "evolver": {
+    "provider_interface": "SiliconFlow OpenAI-compatible API",
+    "model": "Qwen/Qwen3-14B",
+    "retries": 0,
+    "max_rounds": 2,
+    "max_candidates_per_round": 2,
+    "max_evolver_calls": 4
+  },
+  "aggregate": {
+    "planned_runs": 3,
+    "recorded_runs": 3,
+    "accepted_runs": 1,
+    "strict_end_to_end_acceptance_rate": 0.3333333333,
+    "diagnosis_protocol_failures": 1,
+    "no_acceptable_candidate_runs": 1,
+    "generated_candidates": 3,
+    "accepted_candidates": 1,
+    "rolled_back_candidates": 2,
+    "all_demonstration_runs_including_original": 4,
+    "all_demonstration_accepted_runs_including_original": 2,
+    "all_demonstration_acceptance_rate_including_original": 0.5
+  },
+  "runs": [
+    {
+      "loop_id": "ai-health-repeat-20260830-1",
+      "status": "completed",
+      "decision": "accept",
+      "initial_version": "defect-v1",
+      "current_version": "ai-r1-c1-8015a8",
+      "candidate_count": 1,
+      "candidate_sha256": "9EADC081C3773F216792EA9E2B91EDED969CCF4CBF80D8B1823DB02E13FCE483",
+      "comparisons": {
+        "improvement": {
+          "baseline_hard_pass_rate": 0.25,
+          "candidate_hard_pass_rate": 1.0,
+          "baseline_soft_warnings": 2,
+          "candidate_soft_warnings": 0,
+          "mean_latency_ms_delta": -4863.0
+        },
+        "regression": {
+          "baseline_hard_pass_rate": 1.0,
+          "candidate_hard_pass_rate": 1.0,
+          "baseline_soft_warnings": 0,
+          "candidate_soft_warnings": 0,
+          "mean_latency_ms_delta": 774.625
+        },
+        "holdout": {
+          "baseline_hard_pass_rate": 0.75,
+          "candidate_hard_pass_rate": 1.0,
+          "baseline_soft_warnings": 1,
+          "candidate_soft_warnings": 1,
+          "mean_latency_ms_delta": 870.125
+        }
+      },
+      "full_audit_sha256": "1CDB2589C2D5E4E6F07252D9F8AD37B8BB068279234801CE8C711F0FFD12DC29"
+    },
+    {
+      "loop_id": "ai-health-repeat-20260830-2",
+      "status": "failed",
+      "decision": "not_evaluated",
+      "initial_version": "defect-v1",
+      "current_version": "defect-v1",
+      "candidate_count": 0,
+      "failed_phase": "diagnosis",
+      "error": "diagnosis model did not return valid JSON",
+      "full_audit_sha256": "406233E54062A8BDCDF5B5C74E09A3F3D16AF31593428A804A2A78601E82D3BB"
+    },
+    {
+      "loop_id": "ai-health-repeat-20260830-3",
+      "status": "no_acceptable_candidate",
+      "decision": "rollback_all",
+      "initial_version": "defect-v1",
+      "current_version": "defect-v1",
+      "candidate_count": 2,
+      "candidate_content_sha256": "505E16069BFBC88671BD055570273EF11ACC1D87753C8CEB9EF22C24CF697634",
+      "candidates_identical": true,
+      "rollback_reason": "holdout soft warnings exceeded the allowed increase",
+      "comparisons_for_both_candidates": {
+        "improvement": {
+          "baseline_hard_pass_rate": 0.25,
+          "candidate_hard_pass_rate": 1.0,
+          "baseline_soft_warnings": 1,
+          "candidate_soft_warnings": 0,
+          "mean_latency_ms_delta": 2422.0
+        },
+        "regression": {
+          "baseline_hard_pass_rate": 1.0,
+          "candidate_hard_pass_rate": 1.0,
+          "baseline_soft_warnings": 0,
+          "candidate_soft_warnings": 0,
+          "mean_latency_ms_delta": 39.875
+        },
+        "holdout": {
+          "baseline_hard_pass_rate": 0.75,
+          "candidate_hard_pass_rate": 1.0,
+          "baseline_soft_warnings": 0,
+          "candidate_soft_warnings": 1,
+          "mean_latency_ms_delta": -526.375
+        }
+      },
+      "full_audit_sha256": "953B7A1DF2FA8D0EDE6287A8E846B674F6693DD0630F1637F9F72431C0290A37"
+    }
+  ],
+  "original_discovery_run": {
+    "loop_id": "ai-health-planner-evolution-20260830-v2",
+    "status": "completed",
+    "decision": "accept",
+    "full_audit_sha256": "1CE26D3B2ABDD29405A2F7FC9BB2217EAB151FAB1D21687EF69552076F873618"
+  },
+  "interpretation": [
+    "The repeats show that the framework can accept an improving candidate and roll back candidates that violate a holdout warning gate.",
+    "One diagnosis JSON failure shows that the AI protocol layer is not yet operationally robust.",
+    "Three repeats are too few to estimate general reliability.",
+    "Synthetic cases validate the mechanism and real-system integration, not medical business outcomes."
+  ]
+}
