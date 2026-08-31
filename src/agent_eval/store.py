@@ -58,6 +58,12 @@ class ResultStore:
                 result_json TEXT NOT NULL,
                 PRIMARY KEY (run_id, case_id)
             );
+            CREATE TABLE IF NOT EXISTS run_cases (
+                run_id TEXT NOT NULL,
+                case_id TEXT NOT NULL,
+                case_sha256 TEXT NOT NULL,
+                PRIMARY KEY (run_id, case_id)
+            );
             CREATE TABLE IF NOT EXISTS reviews (
                 run_id TEXT NOT NULL,
                 case_id TEXT NOT NULL,
@@ -85,15 +91,66 @@ class ResultStore:
         source: str,
         metadata: Mapping[str, Any],
         resume: bool = False,
+        case_manifest: Mapping[str, str] | None = None,
     ) -> None:
         with self.lock:
-            exists = self.connection.execute(
-                "SELECT 1 FROM runs WHERE run_id = ?", (run_id,)
+            existing = self.connection.execute(
+                "SELECT adapter, suite, source, metadata_json FROM runs WHERE run_id = ?",
+                (run_id,),
             ).fetchone()
-            if exists:
-                if resume:
-                    return
-                raise ValueError(f"run already exists; use resume to continue: {run_id}")
+            if existing:
+                if not resume:
+                    raise ValueError(f"run already exists; use resume to continue: {run_id}")
+                previous_metadata = json.loads(existing["metadata_json"])
+                stable_previous = {
+                    key: value for key, value in previous_metadata.items() if key != "case_count"
+                }
+                stable_current = {
+                    key: value for key, value in metadata.items() if key != "case_count"
+                }
+                if (
+                    existing["adapter"] != adapter
+                    or existing["suite"] != suite
+                    or existing["source"] != source
+                    or stable_previous != stable_current
+                ):
+                    raise ValueError("resume run identity or execution configuration changed")
+                if case_manifest is not None:
+                    stored = {
+                        row["case_id"]: row["case_sha256"]
+                        for row in self.connection.execute(
+                            "SELECT case_id, case_sha256 FROM run_cases WHERE run_id = ?",
+                            (run_id,),
+                        ).fetchall()
+                    }
+                    saved_count = self.connection.execute(
+                        "SELECT COUNT(*) FROM case_results WHERE run_id = ?", (run_id,)
+                    ).fetchone()[0]
+                    if not stored and saved_count:
+                        raise ValueError("cannot safely resume a legacy run without case identities")
+                    missing = sorted(set(stored).difference(case_manifest))
+                    changed = sorted(
+                        case_id
+                        for case_id, digest in stored.items()
+                        if case_id in case_manifest and case_manifest[case_id] != digest
+                    )
+                    if missing or changed:
+                        details = []
+                        if missing:
+                            details.append(f"missing case_id: {', '.join(missing)}")
+                        if changed:
+                            details.append(f"changed case_id: {', '.join(changed)}")
+                        raise ValueError("resume dataset changed; " + "; ".join(details))
+                    self.connection.executemany(
+                        "INSERT OR IGNORE INTO run_cases (run_id, case_id, case_sha256) VALUES (?, ?, ?)",
+                        ((run_id, case_id, digest) for case_id, digest in case_manifest.items()),
+                    )
+                self.connection.execute(
+                    "UPDATE runs SET status = 'running', finished_at = NULL, metadata_json = ? WHERE run_id = ?",
+                    (json.dumps(metadata, ensure_ascii=False), run_id),
+                )
+                self.connection.commit()
+                return
             self.connection.execute(
                 """
                 INSERT INTO runs
@@ -102,6 +159,11 @@ class ResultStore:
                 """,
                 (run_id, adapter, suite, source, _now(), json.dumps(metadata, ensure_ascii=False)),
             )
+            if case_manifest is not None:
+                self.connection.executemany(
+                    "INSERT INTO run_cases (run_id, case_id, case_sha256) VALUES (?, ?, ?)",
+                    ((run_id, case_id, digest) for case_id, digest in case_manifest.items()),
+                )
             self.connection.commit()
 
     def finish_run(self, run_id: str, status: str) -> None:

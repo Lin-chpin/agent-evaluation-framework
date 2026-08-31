@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import hashlib
 import json
 import uuid
 from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
@@ -16,6 +17,7 @@ from .model import (
     NormalizedTrace,
     ProjectAdapter,
     RunContext,
+    to_jsonable,
 )
 from .rules import behavior_checks, consistency_checks, feedback_checks, structure_checks
 from .store import ResultStore
@@ -46,6 +48,26 @@ def load_adapter(path: Path) -> ProjectAdapter:
     if not isinstance(adapter, ProjectAdapter):
         raise TypeError(f"{path} must export ADAPTER = ProjectAdapter(...)")
     return adapter
+
+
+def _case_manifest(cases: Sequence[EvalCase]) -> dict[str, str]:
+    if not cases:
+        raise ValueError("evaluation suite must not be empty")
+    manifest: dict[str, str] = {}
+    for case in cases:
+        case_id = case.case_id.strip()
+        if not case_id:
+            raise ValueError("evaluation case requires a non-empty case_id")
+        if case_id in manifest:
+            raise ValueError(f"evaluation suite contains duplicate case_id: {case_id}")
+        canonical = json.dumps(
+            to_jsonable(case),
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("utf-8")
+        manifest[case_id] = hashlib.sha256(canonical).hexdigest().upper()
+    return manifest
 
 
 class EvaluationEngine:
@@ -179,9 +201,12 @@ class EvaluationEngine:
         run_id: str | None = None,
         resume: bool = False,
     ) -> dict[str, Any]:
+        case_manifest = _case_manifest(cases)
         run_id = run_id or f"{suite}-{uuid.uuid4().hex[:12]}"
         with self.store.lock_run(run_id):
-            return self._run_suite_locked(cases, suite, source, run_id, resume)
+            return self._run_suite_locked(
+                cases, suite, source, run_id, resume, case_manifest
+            )
 
     def _run_suite_locked(
         self,
@@ -190,6 +215,7 @@ class EvaluationEngine:
         source: str,
         run_id: str,
         resume: bool,
+        case_manifest: Mapping[str, str],
     ) -> dict[str, Any]:
         self.store.start_run(
             run_id,
@@ -206,6 +232,7 @@ class EvaluationEngine:
                 "collect_few_shot": self.collect_few_shot,
             },
             resume=resume,
+            case_manifest=case_manifest,
         )
         pending = [
             case for case in cases if not (resume and self.store.has_case(run_id, case.case_id))

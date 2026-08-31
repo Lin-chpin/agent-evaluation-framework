@@ -30,3 +30,17 @@ jobs:
             evidence-${{ runner.os }}.json
             concurrency-${{ runner.os }}.json
             soak-${{ runner.os }}.json
+
+  container-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -e .
+      - run: python scripts/verify_container.py --output container-smoke.json
+      - uses: actions/upload-artifact@v7
+        with:
+          name: container-smoke
+          path: container-smoke.json

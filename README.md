@@ -148,7 +148,7 @@ agent-eval evolve-auto `
 
 `TextArtifactWorkspace` 只在 `.agent-eval/workspaces` 中保存基线快照和候选产物，不覆盖领域项目原文件。基线可以是单个文本文件，也可以是文本仓库目录；多文件候选通过 `TextCandidate.files` 声明相对路径与完整内容，框架复制当前沙箱目录后再应用变更，并保存目录哈希。接受结果仍然停留在沙箱，生产发布不属于自动循环。
 
-循环会原子写入 `.agent-eval/workspaces/<loop-id>/checkpoint.json`。异常、时间预算或生成调用预算中止后，可以提高预算或修复外部故障，再使用相同参数追加 `--resume`；已完成的 case 从 SQLite 读取，内容相同的已暂存候选会直接复用。时间预算在阶段边界检查，不会强杀正在执行的领域调用；单次调用仍由 `--timeout` 和领域适配器负责。
+循环会原子写入 `.agent-eval/workspaces/<loop-id>/checkpoint.json`。异常、时间预算或生成调用预算中止后，可以提高预算或修复外部故障，再使用相同参数追加 `--resume`；已完成的 case 从 SQLite 读取，内容相同的已暂存候选会直接复用。普通评测运行会保存 case 身份哈希，恢复时拒绝缺失或内容改变的历史 case，只允许追加新 case；适配器、suite、source 和稳定执行配置也必须保持一致。时间预算在阶段边界检查，不会强杀正在执行的领域调用；单次调用仍由 `--timeout` 和领域适配器负责。
 
 `--max-evolver-calls` 统计诊断器和候选生成器的调用次数。它不冒充被测 Agent 的 token 或供应商账单；业务 Agent 的模型成本应通过 Trace 自定义指标进入评测策略。
 
