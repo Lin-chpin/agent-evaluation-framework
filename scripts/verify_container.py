@@ -71,7 +71,10 @@ def main() -> int:
     try:
         with tempfile.TemporaryDirectory() as directory:
             workspace = Path(directory)
-            (workspace / "probe.txt").write_text("probe", encoding="utf-8")
+            probe = workspace / "probe.txt"
+            probe.write_text("probe", encoding="utf-8")
+            workspace.chmod(0o755)
+            probe.chmod(0o644)
             completed = run_agent_container(
                 args.image,
                 ["python", "-c", PROBE],
