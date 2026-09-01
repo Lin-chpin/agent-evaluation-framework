@@ -4,6 +4,8 @@
 
 A domain-independent framework for automated Agent evaluation, diagnosis, human review, regression testing, and version evolution. It does not ship with a built-in business test set, and it never bypasses business gates to modify or deploy an Agent, Skill, Prompt, or safety policy.
 
+This project targets enterprise AI/Agent engineering problems and is intended for teams that need to evaluate, diagnose, regression-test, and control the evolution of AI systems.
+
 See [BENCHMARK_RESULTS.en.md](BENCHMARK_RESULTS.en.md) for the published results, the claims those results support, and the commands needed to reproduce them.
 
 ## License
