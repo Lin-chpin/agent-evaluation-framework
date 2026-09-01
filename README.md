@@ -8,6 +8,14 @@
 
 公开测试结果、可支持的结论和一键复现方式见 [BENCHMARK_RESULTS.md](BENCHMARK_RESULTS.md)。
 
+最低成本验证不需要 API Key。在 Python 3.11 或更高版本中运行：
+
+```powershell
+python -m unittest discover -s tests -q
+```
+
+当前提交预期显示 `Ran 49 tests` 和 `OK`。这条命令只验证仓库自带测试，不调用外部模型或公开榜单接口。
+
 ## 项目流程
 
 ![项目流程图](docs/project-flow.zh-CN.png)

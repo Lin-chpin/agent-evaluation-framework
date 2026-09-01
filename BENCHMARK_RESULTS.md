@@ -26,7 +26,7 @@ python scripts/verify_evidence.py --output evidence/verified-results.json
 
 GitHub Actions 会在 Windows 和 Linux 上执行同一命令，并上传机器可读 JSON。
 
-本次本地 Python 3.12 结果保存在 [evidence/verified-results.json](evidence/verified-results.json)。验证脚本同时记录时间戳、框架版本、Git 提交、工作区是否有未提交改动、运行平台和复现命令。该证据文件直接记录其对应的精确提交和工作区状态，避免文档中的提交号随版本更新而失效。当前 `main` 的 GitHub Actions 继续在 Windows 和 Linux 上运行同一验证脚本并保存对应提交的产物。
+本次本地 Python 3.13.5 结果保存在 [evidence/verified-results.json](evidence/verified-results.json)。验证脚本同时记录时间戳、框架版本、Git 提交、工作区是否有未提交改动、运行平台和复现命令。该证据文件直接记录其对应的精确提交和工作区状态，避免文档中的提交号随版本更新而失效。当前 `main` 的 GitHub Actions 继续在 Windows 和 Linux 上运行同一验证脚本并保存对应提交的产物。
 
 每套数据保留两种身份。`source_file_sha256` 是原始 JSONL 文件的逐字节哈希，`normalized_case_manifest.sha256` 是框架解析并规范化 case 后的清单哈希。两者用途不同，数值不应相同。前者证明输入文件没有替换，后者证明恢复和候选比较使用相同的规范化测试内容。
 
@@ -34,7 +34,7 @@ GitHub Actions 会在 Windows 和 Linux 上执行同一命令，并上传机器�
 
 | 证据 | 结果 | 能证明什么 |
 | --- | --- | --- |
-| 自动化测试 | 42/42 通过 | 规则、演化决策、场景独立门禁、严格 holdout 门禁、多轮继续、冻结数据恢复校验、空集与重复 ID 拒绝、追加式恢复身份、预算、LLM JSON 边界、候选证据隔离、Gold 复核、评测指标、跨进程互斥、SQLite 多写者、多文件操作与回滚、容器安全默认值、进程超时和输出超限终止符合当前测试口径 |
+| 自动化测试 | 49/49 通过 | 规则、演化决策、场景独立门禁、严格 holdout 门禁、多轮继续、冻结数据恢复校验、空集与重复 ID 拒绝、追加式恢复身份、预算、LLM JSON 边界、候选证据隔离、Gold 复核、评测指标、跨进程互斥、SQLite 多写者、多文件操作与回滚、容器安全默认值、进程超时和输出超限终止符合当前测试口径 |
 | 确定性文本演化 | 坏候选 rollback，好候选 accept | 三数据集门禁能够阻止破坏留出集的候选，并保留安全改进 |
 | 代码 Agent 演化 | 坏代码 rollback，好代码 accept；文本文件写入、删除和移动均进入候选目录 | 单文件和多文件目录候选能在独立工作区进入同一演化闭环，文件操作受路径和冲突校验，回滚不覆盖基线 |
 | 评测 Skill 演化 | 坏候选 rollback，好候选 accept；improvement 0% → 100%，regression 100% → 100%，holdout 0% → 100% | 模拟审核报告可以按 improvement/regression/holdout 进入评测 Skill 自身的受控回放闭环 |

@@ -8,6 +8,14 @@ This project is for enterprise teams that need to evaluate, diagnose, regression
 
 See [BENCHMARK_RESULTS.en.md](BENCHMARK_RESULTS.en.md) for the published results, the claims those results support, and the commands needed to reproduce them.
 
+The lowest-cost verification requires no API key. With Python 3.11 or newer, run:
+
+```powershell
+python -m unittest discover -s tests -q
+```
+
+The current revision is expected to print `Ran 49 tests` and `OK`. This command runs only the repository's built-in tests. It does not call an external model or public leaderboard service.
+
 ## Project flow
 
 ![Project flow](docs/project-flow.en.png)
