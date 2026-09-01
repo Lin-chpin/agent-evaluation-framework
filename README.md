@@ -8,6 +8,14 @@
 
 公开测试结果、可支持的结论和一键复现方式见 [BENCHMARK_RESULTS.md](BENCHMARK_RESULTS.md)。
 
+## 项目流程
+
+![项目流程图](docs/project-flow.zh-CN.png)
+
+[Mermaid 源码](docs/project-flow.zh-CN.mmd)
+
+图中的 JSON 报告是机器读取、统计、回归和复现的结构化事实源，Markdown 报告由 JSON 生成，供人工阅读。
+
 ## 使用许可
 
 本项目源码公开，供非商业研究、学习、测试、修改和分发使用，不属于 OSI 定义的开源软件。分发原项目、部分代码或衍生作品时，必须保留 [PolyForm Noncommercial License 1.0.0](LICENSE) 及其中的 `Required Notice`。商业使用需要取得版权所有者的书面授权，联系邮箱为 [linandchpin.2033@gmail.com](mailto:linandchpin.2033@gmail.com)。
@@ -69,7 +77,7 @@ Copyright © 2026 Lin-chpin。
 
 ## 安装与运行
 
-业务项目准备接入、验收或上线时，先按[业务接入验收协议](功能列表/业务接入验收.md)冻结版本、数据集、Gold、门禁、SLO 和回滚目标。只有合成数据时不能声明真实业务效果或生产验收。
+业务项目准备接入、验收或上线时，接入方应自行冻结目标版本、数据集、Gold、门禁、SLO 和回滚目标。只有合成数据时不能声明真实业务效果或生产验收。
 
 ```powershell
 cd path\to\agent-evaluation-framework

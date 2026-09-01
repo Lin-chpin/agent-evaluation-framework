@@ -8,6 +8,14 @@ This project targets enterprise AI/Agent engineering problems and is intended fo
 
 See [BENCHMARK_RESULTS.en.md](BENCHMARK_RESULTS.en.md) for the published results, the claims those results support, and the commands needed to reproduce them.
 
+## Project flow
+
+![Project flow](docs/project-flow.en.png)
+
+[Mermaid source](docs/project-flow.en.mmd)
+
+In the diagram, the JSON report is the structured source for machine reading, aggregation, regression, and reproduction. The Markdown report is generated from JSON for human review.
+
 ## License
 
 This is a source-available project for noncommercial research, study, testing, modification, and redistribution. It is not open-source software under the OSI definition. Any distribution of the project, part of its code, or a derivative work must preserve the [PolyForm Noncommercial License 1.0.0](LICENSE) and its `Required Notice`. Commercial use requires written permission from the copyright holder. Contact [linandchpin.2033@gmail.com](mailto:linandchpin.2033@gmail.com) for commercial licensing.
@@ -69,7 +77,7 @@ The project adapter defines field names and business meaning. The framework only
 
 ## Install and run
 
-Before integration, acceptance, or deployment, follow the [Business Integration Acceptance Protocol](功能列表/业务接入验收.en.md) to freeze the target version, datasets, Gold, gates, SLOs, and rollback target. Synthetic-only evidence cannot support a business-outcome or production-acceptance claim.
+Before integration, acceptance, or deployment, the integrating project should freeze the target version, datasets, Gold, gates, SLOs, and rollback target. Synthetic-only evidence cannot support a business-outcome or production-acceptance claim.
 
 ```powershell
 cd path\to\agent-evaluation-framework

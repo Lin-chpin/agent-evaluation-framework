@@ -1,0 +1,49 @@
+```mermaid
+flowchart TD
+    A[领域适配器<br/>场景、测试集、Gold、门禁]
+    B[执行 Agent / Skill]
+    C[采集 Trace 与运行产物]
+    D[四层问题发现<br/>事实、流程、表达、稳定性]
+    E[JSON 报告<br/>机器读取、统计、回归、复现]
+    F[Markdown 报告<br/>由 JSON 生成，供人工阅读]
+    G[人工审核报告]
+    H[选择被测对象]
+
+    A --> B --> C --> D --> E --> F --> G --> H
+
+    subgraph NORMAL[被测 Agent / Skill 演化]
+        N1[分析 badcase]
+        N2[生成候选修改]
+        N3[隔离工作区应用候选]
+        N4[回放 improvement / regression / holdout]
+        N5{Scenario 独立门禁}
+        N6[人工批准候选版本]
+        N7[回滚候选]
+        N1 --> N2 --> N3 --> N4 --> N5
+        N5 -->|通过| N6
+        N5 -->|失败| N7 --> N1
+    end
+
+    subgraph EVAL[评测 Skill 演化]
+        E1[判断评测报告]
+        E2{报告判断是否正确}
+        E3[沉淀正确历史样本]
+        E4[沉淀错误或部分正确样本]
+        E5[修改评测 Skill]
+        E6[回放错误样本<br/>同时保护原本正确样本]
+        E7{评测 Skill 回归门禁}
+        E8[保留评测 Skill 候选]
+        E1 --> E2
+        E2 -->|正确| E3
+        E2 -->|错误或部分正确| E4 --> E5 --> E6 --> E7
+        E7 -->|通过| E8
+        E7 -->|失败| E5
+    end
+
+    H -->|Agent / Skill| N1
+    H -->|评测 Skill| E1
+    N6 --> R[记录版本、commit、参数和证据]
+    E8 --> R
+    R --> S[进入下一轮评测]
+    S --> B
+```

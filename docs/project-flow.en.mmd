@@ -1,0 +1,49 @@
+```mermaid
+flowchart TD
+    A[Domain adapter<br/>scenarios, test sets, gold, gates]
+    B[Run Agent / Skill]
+    C[Collect traces and run artifacts]
+    D[Four-layer diagnosis<br/>facts, behavior, language, stability]
+    E[JSON report<br/>machine reading, aggregation, regression, reproduction]
+    F[Markdown report<br/>generated from JSON for human review]
+    G[Human review]
+    H[Select the evaluated target]
+
+    A --> B --> C --> D --> E --> F --> G --> H
+
+    subgraph NORMAL[Agent / Skill evolution]
+        N1[Analyze bad cases]
+        N2[Generate a candidate change]
+        N3[Apply the candidate in an isolated workspace]
+        N4[Replay improvement / regression / holdout]
+        N5{Scenario-specific gates}
+        N6[Human approval]
+        N7[Rollback candidate]
+        N1 --> N2 --> N3 --> N4 --> N5
+        N5 -->|pass| N6
+        N5 -->|fail| N7 --> N1
+    end
+
+    subgraph EVAL[Evaluation Skill evolution]
+        E1[Classify the evaluation report]
+        E2{Is the judgment correct?}
+        E3[Keep as a correct historical sample]
+        E4[Keep as an incorrect or partial sample]
+        E5[Modify the evaluation Skill]
+        E6[Replay wrong samples<br/>while protecting correct samples]
+        E7{Evaluation Skill regression gate}
+        E8[Keep the evaluation Skill candidate]
+        E1 --> E2
+        E2 -->|correct| E3
+        E2 -->|incorrect or partial| E4 --> E5 --> E6 --> E7
+        E7 -->|pass| E8
+        E7 -->|fail| E5
+    end
+
+    H -->|Agent / Skill| N1
+    H -->|evaluation Skill| E1
+    N6 --> R[Record version, commit, parameters, and evidence]
+    E8 --> R
+    R --> S[Start the next evaluation round]
+    S --> B
+```
