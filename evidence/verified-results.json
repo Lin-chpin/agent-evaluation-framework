@@ -5,7 +5,7 @@
   "framework": {
     "name": "agent-evaluation-framework",
     "version": "0.5.0",
-    "source_revision": "42e497031c59d4ca1ff7b7ad22caacd9f29dd03e",
+    "source_revision": "4bac0f3370bdce3aa6a69f0544550b0a82c93aeb",
     "source_is_dirty": false
   },
   "platform": {
