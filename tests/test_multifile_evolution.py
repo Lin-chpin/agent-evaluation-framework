@@ -17,6 +17,7 @@ from agent_eval import (
     Rule,
     RunContext,
     TextCandidate,
+    TextFileOperation,
 )
 from agent_eval.auto_evolution import AutoEvolutionLoop
 from agent_eval.store import ResultStore
@@ -57,6 +58,8 @@ class MultiFileEvolutionTest(unittest.TestCase):
             (baseline / "config").mkdir(parents=True)
             (baseline / "routes.txt").write_text("billing", encoding="utf-8")
             (baseline / "config" / "mode.txt").write_text("safe", encoding="utf-8")
+            (baseline / "legacy.txt").write_text("legacy", encoding="utf-8")
+            (baseline / "obsolete.txt").write_text("obsolete", encoding="utf-8")
             datasets = {
                 "improvement": [EvalCase("I", {"message": "password"}, {"route": "SUPPORT"}, suite="improvement")],
                 "regression": [EvalCase("R", {"message": "hello"}, {"route": "GENERAL"}, suite="regression")],
@@ -66,8 +69,27 @@ class MultiFileEvolutionTest(unittest.TestCase):
             def generate(_: EvolutionDiagnosis, current, __: int):
                 self.assertIsInstance(current, dict)
                 return (
-                    TextCandidate("bad", "2-bad", "", "unsafe mode", files={"routes.txt": "billing,password", "config/mode.txt": "unsafe"}),
-                    TextCandidate("good", "2", "", "safe extension", files={"routes.txt": "billing,password", "config/mode.txt": "safe"}),
+                    TextCandidate(
+                        "bad",
+                        "2-bad",
+                        "",
+                        "unsafe mode",
+                        operations=(
+                            TextFileOperation("write", "routes.txt", "billing,password"),
+                            TextFileOperation("write", "config/mode.txt", "unsafe"),
+                        ),
+                    ),
+                    TextCandidate(
+                        "good",
+                        "2",
+                        "",
+                        "safe extension",
+                        operations=(
+                            TextFileOperation("write", "routes.txt", "billing,password"),
+                            TextFileOperation("move", "legacy.txt", destination="archive/legacy.txt"),
+                            TextFileOperation("delete", "obsolete.txt"),
+                        ),
+                    ),
                 )
 
             adapter = AutoEvolutionAdapter(
@@ -96,6 +118,9 @@ class MultiFileEvolutionTest(unittest.TestCase):
             accepted = Path(result["current_artifact"])
             self.assertEqual((accepted / "routes.txt").read_text(encoding="utf-8"), "billing,password")
             self.assertEqual((accepted / "config" / "mode.txt").read_text(encoding="utf-8"), "safe")
+            self.assertEqual((accepted / "archive" / "legacy.txt").read_text(encoding="utf-8"), "legacy")
+            self.assertFalse((accepted / "legacy.txt").exists())
+            self.assertFalse((accepted / "obsolete.txt").exists())
 
     def test_rejects_file_outside_candidate_directory(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -105,13 +130,46 @@ class MultiFileEvolutionTest(unittest.TestCase):
             (baseline / "safe.txt").write_text("safe", encoding="utf-8")
             workspace = TextArtifactWorkspace(root / "workspaces")
             workspace.snapshot("escape", baseline)
-            with self.assertRaisesRegex(ValueError, "safe relative path"):
+            with self.assertRaisesRegex(ValueError, "safe forward-slash relative file path"):
                 workspace.stage(
                     "escape",
                     1,
-                    TextCandidate("bad", "2", "", "escape", files={"../outside.txt": "bad"}),
+                    TextCandidate(
+                        "bad",
+                        "2",
+                        "",
+                        "escape",
+                        operations=(TextFileOperation("write", "../outside.txt", "bad"),),
+                    ),
                     baseline.name,
                     root / "workspaces" / "escape" / "baseline" / baseline.name,
+                )
+
+    def test_rejects_conflicting_file_operations_before_staging(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            baseline = root / "repository"
+            baseline.mkdir()
+            (baseline / "one.txt").write_text("one", encoding="utf-8")
+            workspace = TextArtifactWorkspace(root / "workspaces")
+            current = workspace.snapshot("conflict", baseline)
+
+            with self.assertRaisesRegex(ValueError, "operations conflict"):
+                workspace.stage(
+                    "conflict",
+                    1,
+                    TextCandidate(
+                        "bad",
+                        "2",
+                        "",
+                        "conflict",
+                        operations=(
+                            TextFileOperation("write", "one.txt", "changed"),
+                            TextFileOperation("delete", "one.txt"),
+                        ),
+                    ),
+                    baseline.name,
+                    current,
                 )
 
 

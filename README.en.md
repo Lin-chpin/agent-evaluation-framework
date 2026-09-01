@@ -146,7 +146,7 @@ agent-eval evolve-auto `
   --loop-id router-evolution-v1
 ```
 
-`TextArtifactWorkspace` stores baseline snapshots and candidate artifacts under `.agent-eval/workspaces`. A baseline may be one text file or a directory of text files. A multi-file candidate declares complete content by relative path through `TextCandidate.files`; the framework copies the current isolated directory, applies only those paths, and records a directory hash. Domain-project files are never overwritten, and production deployment stays outside the loop.
+`TextArtifactWorkspace` stores baseline snapshots and candidate artifacts under `.agent-eval/workspaces`. A baseline may be one text file or a directory of UTF-8 text files. Multi-file candidates may keep using the compatible `TextCandidate.files` complete-content mapping, or use `TextCandidate.operations` with bounded `write`, `delete`, and `move` operations. Paths must be forward-slash relative file paths. For a directory baseline, the OpenAI-compatible Evolver emits the same operation protocol without a custom multi-file generator. The framework copies the isolated directory, applies the operations, and records a directory hash. Domain-project files are never overwritten, and production deployment stays outside the loop.
 
 The loop atomically writes `.agent-eval/workspaces/<loop-id>/checkpoint.json`. After an exception or budget stop, fix the external failure or raise the budget and reuse the same parameters with `--resume`. Completed cases are loaded from SQLite, and identical staged candidates are reused. Ordinary evaluation runs persist case identity hashes; resume rejects removed or changed historical cases and permits only append-only additions. The adapter, suite, source, and stable execution configuration must also match. The elapsed-time budget is checked between stages and does not kill a domain call already in progress. `--timeout` and the domain adapter still control individual calls.
 
@@ -154,7 +154,7 @@ The loop atomically writes `.agent-eval/workspaces/<loop-id>/checkpoint.json`. A
 
 ### Code Agents
 
-Code candidates use `change_type: code`, and a domain adapter may launch them with `run_agent_process`. Candidate files remain in a separate working directory. Directory candidates may modify several declared files; escaping relative paths are rejected before any write, and rolled-back candidates never overwrite the baseline directory. The runner captures stdout and stderr, applies the explicit working directory, and terminates the process tree after a timeout. Each output stream returns at most 1 MiB by default and receives a truncation marker when the child produces more; adapters can change the limit with `max_output_bytes`.
+Code candidates use `change_type: code`, and a domain adapter may launch them with `run_agent_process`. Candidate files remain in a separate working directory. The runner captures stdout and stderr, applies the explicit working directory, and terminates the process tree after a timeout. Each stream keeps at most 1 MiB by default; exceeding the limit immediately terminates the process tree and raises `OutputLimitExceeded`. Adapters can change the limit with `max_output_bytes`. Escaping or conflicting file operations are rejected before candidate copying, and rollback never overwrites the baseline directory.
 
 ```powershell
 agent-eval evolve-auto `

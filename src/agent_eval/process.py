@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import locale
 import os
 import signal
 import subprocess
 import tempfile
+import threading
 from pathlib import Path
 from typing import Mapping, Sequence
 
@@ -12,16 +14,24 @@ DEFAULT_MAX_OUTPUT_BYTES = 1024 * 1024
 TRUNCATED_OUTPUT_MARKER = "\n...[output truncated]"
 
 
-def _read_output(stream, max_output_bytes: int, encoding: str) -> str:
-    stream.seek(0, os.SEEK_END)
-    was_truncated = stream.tell() > max_output_bytes
-    stream.seek(0)
-    output = stream.read(max_output_bytes).decode(encoding, errors="replace")
-    return output + TRUNCATED_OUTPUT_MARKER if was_truncated else output
+class OutputLimitExceeded(RuntimeError):
+    def __init__(self, command: Sequence[str], stream: str, stdout: str, stderr: str):
+        super().__init__(f"agent {stream} exceeded the configured output limit")
+        self.command = tuple(command)
+        self.stream = stream
+        self.stdout = stdout
+        self.stderr = stderr
 
 
-def _terminate_process_tree(process: subprocess.Popen[str]) -> None:
+def _decode_output(output: bytearray, truncated: bool, encoding: str) -> str:
+    value = bytes(output).decode(encoding, errors="replace")
+    return value + TRUNCATED_OUTPUT_MARKER if truncated else value
+
+
+def _terminate_process_tree(process: subprocess.Popen) -> None:
     # Agent commands may spawn servers or tools; killing only the parent would leak them into later evaluations.
+    if process.poll() is not None:
+        return
     if os.name == "nt":
         subprocess.run(
             ["taskkill", "/PID", str(process.pid), "/T", "/F"],
@@ -33,7 +43,10 @@ def _terminate_process_tree(process: subprocess.Popen[str]) -> None:
         if process.poll() is None:
             process.kill()
     else:
-        os.killpg(process.pid, signal.SIGKILL)
+        try:
+            os.killpg(process.pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
 
 
 def run_agent_process(
@@ -60,33 +73,75 @@ def run_agent_process(
         creation_flags = getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
         creation_flags |= getattr(subprocess, "CREATE_NO_WINDOW", 0)
 
-    # Temporary files keep an output-heavy child from growing the parent process without bound.
-    with tempfile.TemporaryFile() as stdout_file, tempfile.TemporaryFile() as stderr_file:
+    encoding = locale.getpreferredencoding(False)
+    with tempfile.TemporaryFile() as stdin_file:
+        if input_text is not None:
+            stdin_file.write(input_text.encode(encoding))
+            stdin_file.seek(0)
         # Keep shell parsing out of the trust boundary; adapters must provide an explicit argument list.
         process = subprocess.Popen(
             list(command),
             cwd=cwd,
             env={**os.environ, **(environment or {})},
-            stdin=subprocess.PIPE if input_text is not None else subprocess.DEVNULL,
-            stdout=stdout_file,
-            stderr=stderr_file,
-            text=True,
+            stdin=stdin_file,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
             start_new_session=start_new_session,
             creationflags=creation_flags,
         )
-        try:
-            process.communicate(input_text, timeout=timeout_seconds)
-        except subprocess.TimeoutExpired as error:
+        outputs = {"stdout": bytearray(), "stderr": bytearray()}
+        truncated = {"stdout": False, "stderr": False}
+        state: dict[str, str | None] = {"reason": None, "stream": None}
+        state_lock = threading.Lock()
+
+        def stop(reason: str, stream_name: str | None = None) -> None:
+            with state_lock:
+                if state["reason"] is not None:
+                    return
+                state.update(reason=reason, stream=stream_name)
             _terminate_process_tree(process)
-            process.communicate()
-            stdout = _read_output(stdout_file, max_output_bytes, process.encoding)
-            stderr = _read_output(stderr_file, max_output_bytes, process.encoding)
+
+        def capture(stream_name: str) -> None:
+            stream = getattr(process, stream_name)
+            assert stream is not None
+            try:
+                while chunk := stream.read1(65536):
+                    remaining = max_output_bytes - len(outputs[stream_name])
+                    outputs[stream_name].extend(chunk[:remaining])
+                    if len(chunk) > remaining:
+                        truncated[stream_name] = True
+                        stop("output_limit", stream_name)
+                        return
+            finally:
+                stream.close()
+
+        readers = [
+            threading.Thread(target=capture, args=(name,), daemon=True)
+            for name in ("stdout", "stderr")
+        ]
+        for reader in readers:
+            reader.start()
+        try:
+            process.wait(timeout=timeout_seconds)
+        except subprocess.TimeoutExpired as error:
+            stop("timeout")
+            process.wait()
+            for reader in readers:
+                reader.join()
+            stdout = _decode_output(outputs["stdout"], truncated["stdout"], encoding)
+            stderr = _decode_output(outputs["stderr"], truncated["stderr"], encoding)
+            if state["reason"] == "output_limit":
+                raise OutputLimitExceeded(command, str(state["stream"]), stdout, stderr) from error
             raise subprocess.TimeoutExpired(
                 command,
                 timeout_seconds,
                 output=stdout,
                 stderr=stderr,
             ) from error
-        stdout = _read_output(stdout_file, max_output_bytes, process.encoding)
-        stderr = _read_output(stderr_file, max_output_bytes, process.encoding)
+        for reader in readers:
+            reader.join()
+        stdout = _decode_output(outputs["stdout"], truncated["stdout"], encoding)
+        stderr = _decode_output(outputs["stderr"], truncated["stderr"], encoding)
+        if state["reason"] == "output_limit":
+            raise OutputLimitExceeded(command, str(state["stream"]), stdout, stderr)
         return subprocess.CompletedProcess(command, process.returncode, stdout, stderr)

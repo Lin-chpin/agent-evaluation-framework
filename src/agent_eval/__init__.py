@@ -13,11 +13,12 @@ from .model import (
     RunContext,
     ScenarioGate,
     TextCandidate,
+    TextFileOperation,
     TraceEvent,
 )
 from .llm import OpenAICompatibleTextEvolver
 from .container_runner import build_container_command, run_agent_container
-from .process import run_agent_process
+from .process import OutputLimitExceeded, run_agent_process
 
 __all__ = [
     "AutoEvolutionAdapter",
@@ -29,12 +30,14 @@ __all__ = [
     "MetricObjective",
     "NormalizedTrace",
     "OpenAICompatibleTextEvolver",
+    "OutputLimitExceeded",
     "ProjectAdapter",
     "RetryableEvolverError",
     "Rule",
     "RunContext",
     "ScenarioGate",
     "TextCandidate",
+    "TextFileOperation",
     "TraceEvent",
     "run_agent_process",
     "build_container_command",

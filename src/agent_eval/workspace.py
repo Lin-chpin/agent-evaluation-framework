@@ -7,8 +7,12 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Iterator, Mapping
 
-from .model import TextCandidate
+from .model import TextCandidate, TextFileOperation, to_jsonable
 from .locking import exclusive_file_lock
+from .text_file_operations import (
+    apply_text_file_operations,
+    validate_text_file_operations,
+)
 
 
 def safe_name(value: str, field: str) -> str:
@@ -18,22 +22,20 @@ def safe_name(value: str, field: str) -> str:
     return value
 
 
-def _safe_relative_file(value: str) -> Path:
-    path = Path(value)
-    if not value.strip() or path.is_absolute() or ".." in path.parts or path.name in {"", ".", ".."}:
-        raise ValueError(f"candidate file must be a safe relative path: {value}")
-    return path
-
-
 def read_artifact(path: Path) -> str | dict[str, str]:
+    if path.is_symlink():
+        raise ValueError(f"symbolic links are not supported: {path}")
     if path.is_file():
         return path.read_text(encoding="utf-8")
     if not path.is_dir():
         raise FileNotFoundError(f"artifact does not exist: {path}")
-    return {
-        file.relative_to(path).as_posix(): file.read_text(encoding="utf-8")
-        for file in sorted(item for item in path.rglob("*") if item.is_file())
-    }
+    files: dict[str, str] = {}
+    for item in sorted(path.rglob("*")):
+        if item.is_symlink():
+            raise ValueError(f"symbolic links are not supported: {item}")
+        if item.is_file():
+            files[item.relative_to(path).as_posix()] = item.read_text(encoding="utf-8")
+    return files
 
 
 def _tree_sha256(path: Path) -> str:
@@ -62,6 +64,7 @@ class TextArtifactWorkspace:
             raise ValueError(f"auto evolution workspace already exists: {loop_root}")
         target = loop_root / "baseline" / source.name
         target.parent.mkdir(parents=True)
+        read_artifact(source)
         if source.is_dir():
             shutil.copytree(source, target)
         else:
@@ -78,11 +81,54 @@ class TextArtifactWorkspace:
     ) -> Path:
         candidate_id = safe_name(candidate.candidate_id, "candidate_id")
         target = self.root / loop_id / "candidates" / f"round-{round_number}" / candidate_id / name
+        if candidate.operations:
+            if candidate.files:
+                raise ValueError("candidate must use files or operations, not both")
+            if current_artifact is None or not current_artifact.is_dir():
+                raise ValueError("file operations require a directory artifact")
+            current = read_artifact(current_artifact)
+            if not isinstance(current, dict):
+                raise ValueError("file operations require a directory artifact")
+            validated = validate_text_file_operations(current, candidate.operations)
+            manifest_path = target.parent / "artifact-manifest.json"
+            expected_operations = to_jsonable(candidate.operations)
+            if target.exists():
+                if not manifest_path.is_file():
+                    raise ValueError(f"candidate directory exists without manifest: {target}")
+                manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+                if (
+                    manifest.get("operations") != expected_operations
+                    or manifest.get("tree_sha256") != _tree_sha256(target)
+                ):
+                    raise ValueError(f"candidate artifact already exists with different content: {target}")
+                return target
+            target.parent.mkdir(parents=True)
+            shutil.copytree(current_artifact, target)
+            apply_text_file_operations(target, validated)
+            manifest_path.write_text(
+                json.dumps(
+                    {"operations": expected_operations, "tree_sha256": _tree_sha256(target)},
+                    ensure_ascii=False,
+                    indent=2,
+                ),
+                encoding="utf-8",
+            )
+            return target
         if candidate.files:
             if current_artifact is None or not current_artifact.is_dir():
                 raise ValueError("multi-file candidate requires a directory artifact")
             manifest_path = target.parent / "artifact-manifest.json"
             expected_files = dict(candidate.files)
+            current = read_artifact(current_artifact)
+            if not isinstance(current, dict):
+                raise ValueError("multi-file candidate requires a directory artifact")
+            validated = validate_text_file_operations(
+                current,
+                tuple(
+                    TextFileOperation("write", relative, content)
+                    for relative, content in expected_files.items()
+                ),
+            )
             if target.exists():
                 if not manifest_path.is_file():
                     raise ValueError(f"candidate directory exists without manifest: {target}")
@@ -92,10 +138,7 @@ class TextArtifactWorkspace:
                 return target
             target.parent.mkdir(parents=True)
             shutil.copytree(current_artifact, target)
-            for relative, content in expected_files.items():
-                destination = target / _safe_relative_file(relative)
-                destination.parent.mkdir(parents=True, exist_ok=True)
-                destination.write_text(content, encoding="utf-8")
+            apply_text_file_operations(target, validated)
             manifest_path.write_text(
                 json.dumps(
                     {"files": expected_files, "tree_sha256": _tree_sha256(target)},

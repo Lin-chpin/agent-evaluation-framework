@@ -14,6 +14,7 @@ from .model import (
     NormalizedTrace,
     RetryableEvolverError,
     TextCandidate,
+    TextFileOperation,
     to_jsonable,
 )
 
@@ -183,13 +184,24 @@ class OpenAICompatibleTextEvolver:
     def generate_candidates(
         self,
         diagnosis: EvolutionDiagnosis,
-        current_content: str,
+        current_content: str | Mapping[str, str],
         round_number: int,
     ) -> tuple[TextCandidate, ...]:
+        is_directory = isinstance(current_content, Mapping)
+        protocol = (
+            "For a directory, each candidate must contain summary and an operations array. "
+            "Each operation is one of: "
+            '{"operation":"write","path":"relative/file","content":"complete UTF-8 text"}, '
+            '{"operation":"delete","path":"relative/file"}, or '
+            '{"operation":"move","path":"old/relative/file","destination":"new/relative/file"}. '
+            "Use forward-slash relative paths. Do not emit binary, permission, or symlink changes."
+            if is_directory
+            else "For a single file, each candidate must contain summary and complete_content."
+        )
         prompt = (
             "Generate bounded text-artifact candidates from the diagnosis. Preserve existing behavior "
-            "unless the evidence requires a change. Return JSON with a candidates array. Each candidate "
-            "must contain summary and complete_content. Do not include markdown fences.\n\n"
+            "unless the evidence requires a change. Return JSON with a candidates array. "
+            f"{protocol} Do not include markdown fences.\n\n"
             + json.dumps(
                 {
                     "target_type": self.target_type,
@@ -207,11 +219,25 @@ class OpenAICompatibleTextEvolver:
             raise RetryableEvolverError("candidate model did not return valid JSON")
         candidates: list[TextCandidate] = []
         for index, value in enumerate(result.get("candidates", [])[: self.max_candidates], 1):
+            try:
+                operations = tuple(
+                    TextFileOperation(
+                        operation=str(item.get("operation", "")),
+                        path=str(item.get("path", "")),
+                        content=item.get("content"),
+                        destination=item.get("destination"),
+                    )
+                    for item in value.get("operations", [])
+                )
+            except (AttributeError, TypeError, ValueError) as error:
+                raise RetryableEvolverError(f"candidate model returned invalid file operations: {error}") from error
+            if is_directory and not operations:
+                raise RetryableEvolverError("candidate model returned an empty file operation set")
             candidates.append(
                 TextCandidate(
                     candidate_id=f"ai-round-{round_number}-{index}-{uuid.uuid4().hex[:6]}",
                     candidate_version=f"ai-r{round_number}-c{index}-{uuid.uuid4().hex[:6]}",
-                    content=str(value.get("complete_content", "")),
+                    content="" if is_directory else str(value.get("complete_content", "")),
                     summary=str(value.get("summary", "AI-generated text candidate")),
                     change_type=self.change_type,
                     metadata={
@@ -221,6 +247,7 @@ class OpenAICompatibleTextEvolver:
                         "temperature": getattr(self.client, "temperature", None),
                         **value.get("metadata", {}),
                     },
+                    operations=operations if is_directory else (),
                 )
             )
         return tuple(candidates)

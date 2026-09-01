@@ -119,8 +119,10 @@ class AutoEvolutionLoop:
         safe_name(candidate.candidate_version, "candidate_version")
         if candidate.candidate_version == baseline_version:
             raise ValueError("candidate version must differ from baseline version")
-        if not candidate.content.strip() and not candidate.files:
-            raise ValueError("candidate content or files must not be empty")
+        if candidate.files and candidate.operations:
+            raise ValueError("candidate must use files or operations, not both")
+        if not candidate.content.strip() and not candidate.files and not candidate.operations:
+            raise ValueError("candidate content, files, or operations must not be empty")
 
     def run(
         self,

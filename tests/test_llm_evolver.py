@@ -6,6 +6,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parents[1] / "src"))
 
+from agent_eval import EvolutionDiagnosis, RetryableEvolverError
 from agent_eval.llm import OpenAICompatibleTextEvolver, _parse_json_object
 
 
@@ -30,6 +31,40 @@ class StubClient:
 
     def request_json(self, _: str) -> dict:
         return self.responses.pop(0)
+
+
+class DirectoryStubClient:
+    model = "stub"
+
+    def request_json(self, _: str) -> dict:
+        return {
+            "candidates": [
+                {
+                    "summary": "update repository",
+                    "operations": [
+                        {"operation": "write", "path": "routes.txt", "content": "billing,password"},
+                        {"operation": "move", "path": "old.txt", "destination": "archive/old.txt"},
+                        {"operation": "delete", "path": "unused.txt"},
+                    ],
+                }
+            ]
+        }
+
+
+class InvalidDirectoryStubClient:
+    model = "stub"
+
+    def request_json(self, _: str) -> dict:
+        return {
+            "candidates": [
+                {
+                    "summary": "escape repository",
+                    "operations": [
+                        {"operation": "write", "path": "../outside.txt", "content": "bad"}
+                    ],
+                }
+            ]
+        }
 
 
 class LlmEvolverTest(unittest.TestCase):
@@ -57,6 +92,26 @@ class LlmEvolverTest(unittest.TestCase):
         self.assertEqual(diagnosis.evidence_case_ids, ("IMPROVE",))
         self.assertEqual(candidates[0].content, "billing,password")
         self.assertEqual(candidates[0].metadata["generator"], "openai-compatible")
+
+    def test_turns_directory_json_into_file_operations(self) -> None:
+        evolver = OpenAICompatibleTextEvolver(DirectoryStubClient(), "agent", "router")
+        candidates = evolver.generate_candidates(
+            EvolutionDiagnosis("update repository", "agent", "router"),
+            {"routes.txt": "billing", "old.txt": "old", "unused.txt": "unused"},
+            1,
+        )
+
+        self.assertEqual([item.operation for item in candidates[0].operations], ["write", "move", "delete"])
+        self.assertEqual(candidates[0].operations[1].destination, "archive/old.txt")
+
+    def test_rejects_unsafe_directory_operation_from_model(self) -> None:
+        evolver = OpenAICompatibleTextEvolver(InvalidDirectoryStubClient(), "agent", "router")
+        with self.assertRaises(RetryableEvolverError):
+            evolver.generate_candidates(
+                EvolutionDiagnosis("update repository", "agent", "router"),
+                {"routes.txt": "billing"},
+                1,
+            )
 
 
 if __name__ == "__main__":

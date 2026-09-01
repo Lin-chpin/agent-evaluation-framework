@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field, is_dataclass
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any, Callable, Mapping, Sequence
 
 
@@ -152,6 +152,42 @@ class EvolutionDiagnosis:
 
 
 @dataclass(frozen=True)
+class TextFileOperation:
+    operation: str
+    path: str
+    content: str | None = None
+    destination: str | None = None
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.path, str):
+            raise ValueError("path must be a string")
+        if self.operation not in {"write", "delete", "move"}:
+            raise ValueError(f"unsupported text file operation: {self.operation}")
+        if self.operation == "write" and not isinstance(self.content, str):
+            raise ValueError("write operation requires string content")
+        if self.operation == "move" and not self.destination:
+            raise ValueError("move operation requires destination")
+        if self.destination is not None and not isinstance(self.destination, str):
+            raise ValueError("destination must be a string")
+        if self.operation != "move" and self.destination is not None:
+            raise ValueError(f"{self.operation} operation must not include destination")
+        if self.operation != "write" and self.content is not None:
+            raise ValueError(f"{self.operation} operation must not include content")
+        for name, value in (("path", self.path), ("destination", self.destination)):
+            if value is None:
+                continue
+            path = PurePosixPath(value)
+            if (
+                not value.strip()
+                or "\\" in value
+                or path.is_absolute()
+                or ".." in path.parts
+                or path.name in {"", ".", ".."}
+            ):
+                raise ValueError(f"{name} must be a safe forward-slash relative file path")
+
+
+@dataclass(frozen=True)
 class TextCandidate:
     candidate_id: str
     candidate_version: str
@@ -160,6 +196,7 @@ class TextCandidate:
     change_type: str = "skill"
     metadata: Mapping[str, Any] = field(default_factory=dict)
     files: Mapping[str, str] = field(default_factory=dict)
+    operations: tuple[TextFileOperation, ...] = ()
 
 
 @dataclass(frozen=True)
