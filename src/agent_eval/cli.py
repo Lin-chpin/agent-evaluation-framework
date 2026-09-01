@@ -12,7 +12,7 @@ from .auto_evolution import (
 from .engine import EvaluationEngine, load_adapter, load_cases
 from .evolution import EvolutionEngine, load_candidate, load_policy
 from .llm import OpenAICompatibleReviewer
-from .model import EvolutionBudget
+from .model import EvolutionBudget, to_jsonable
 from .review_samples import promote_review_record, write_review_record
 from .reporting import (
     write_auto_evolution_artifacts,
@@ -21,6 +21,7 @@ from .reporting import (
 )
 from .store import ResultStore
 from .workspace import TextArtifactWorkspace
+from .test_selection import select_tests
 
 
 def _add_runtime_options(parser: argparse.ArgumentParser) -> None:
@@ -49,6 +50,16 @@ def _build_parser() -> argparse.ArgumentParser:
     run.add_argument("--cases", type=Path, required=True)
     run.add_argument("--run-id")
     run.add_argument("--resume", action="store_true")
+
+    select = commands.add_parser(
+        "select-tests", help="recommend test suites from the current Git diff"
+    )
+    select.add_argument("--repository", type=Path, default=Path("."))
+    select.add_argument("--base", default="HEAD")
+    select.add_argument("--ai-provider", choices=("none", "local", "remote"), default="none")
+    select.add_argument("--ai-input", choices=("auto", "raw", "summary"), default="auto")
+    select.add_argument("--confidence-threshold", type=float, default=0.7)
+    select.add_argument("--output", type=Path)
 
     release = commands.add_parser(
         "release", help="run targeted regression, smoke, then optional full"
@@ -170,6 +181,28 @@ def _run(args: argparse.Namespace) -> int:
     print(json.dumps({key: value for key, value in summary.items() if key != "results"}, ensure_ascii=False))
     print(f"report: {output / 'report.md'}")
     return 1 if summary["hard_failures"] else 0
+
+
+def _select_tests(args: argparse.Namespace) -> int:
+    reviewer = None
+    if args.ai_provider != "none":
+        reviewer = OpenAICompatibleReviewer.from_environment()
+        if reviewer is None:
+            raise SystemExit("AI selection requires AGENT_EVAL_MODEL")
+    selection = select_tests(
+        args.repository,
+        args.base,
+        ai_provider=args.ai_provider,
+        ai_input=args.ai_input,
+        reviewer=reviewer,
+        confidence_threshold=args.confidence_threshold,
+    )
+    content = json.dumps(to_jsonable(selection), ensure_ascii=False, indent=2)
+    if args.output:
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        args.output.write_text(content + "\n", encoding="utf-8")
+    print(content)
+    return 2 if selection.human_review_required else 0
 
 
 def _release(args: argparse.Namespace) -> int:
@@ -363,6 +396,8 @@ def main(argv: list[str] | None = None) -> int:
     args = _build_parser().parse_args(argv)
     if args.command == "run":
         return _run(args)
+    if args.command == "select-tests":
+        return _select_tests(args)
     if args.command == "release":
         return _release(args)
     if args.command == "evolve":

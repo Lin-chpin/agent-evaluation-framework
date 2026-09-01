@@ -141,6 +141,37 @@ class ProjectAdapter:
 
 
 @dataclass(frozen=True)
+class TestImpactAssessment:
+    mode: str
+    confidence: float
+    risk: str
+    reasons: tuple[str, ...] = ()
+    source: str = "rules"
+    input_kind: str = "metadata"
+
+    def __post_init__(self) -> None:
+        if self.mode not in {"smoke", "regression", "full"}:
+            raise ValueError("mode must be smoke, regression, or full")
+        if not 0 <= self.confidence <= 1:
+            raise ValueError("confidence must be between 0 and 1")
+        if self.risk not in {"low", "medium", "high"}:
+            raise ValueError("risk must be low, medium, or high")
+
+
+@dataclass(frozen=True)
+class TestSelection:
+    mode: str
+    suites: tuple[str, ...]
+    rule_assessment: TestImpactAssessment
+    ai_assessment: TestImpactAssessment | None = None
+    human_review_required: bool = False
+    review_reasons: tuple[str, ...] = ()
+    changed_files: int = 0
+    additions: int = 0
+    deletions: int = 0
+
+
+@dataclass(frozen=True)
 class EvolutionDiagnosis:
     summary: str
     target_type: str

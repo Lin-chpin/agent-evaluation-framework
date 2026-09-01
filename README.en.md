@@ -102,6 +102,29 @@ agent-eval release `
 
 Each result is written to SQLite immediately. Reusing the same `--run-id` with `--resume` skips completed cases.
 
+## Select test suites from a Git diff
+
+`select-tests` uses three layers to decide which suites an uncommitted change needs: deterministic rules set the safety floor, an optional AI reads the change to estimate its real impact, and a person reviews only low-confidence, rule/AI conflicts, or high-risk changes. AI cannot downgrade the mode required by the rules.
+
+- `smoke` covers low-risk documentation, UI, and report-presentation changes.
+- `regression` covers Planner, Prompt, safety, follow-up, quality-control, and general behavioral changes.
+- `full` covers generation, RAG/retrieval, Agent-core, or evaluation-result schema changes.
+
+```powershell
+# Deterministic rules only; no model call
+agent-eval select-tests --repository path/to/domain-project
+
+# A locally deployed model receives the complete diff by default
+$env:AGENT_EVAL_MODEL = "local-model"
+$env:AGENT_EVAL_BASE_URL = "http://127.0.0.1:11434/v1"
+agent-eval select-tests --repository path/to/domain-project --ai-provider local
+
+# A third-party API is forced to receive only a sanitized summary
+agent-eval select-tests --repository path/to/domain-project --ai-provider remote
+```
+
+Local mode accepts only loopback, private-IP, or `.local` endpoints and sends the complete diff by default; add `--ai-input summary` for a stricter local option. Remote mode rejects `--ai-input raw`. Its summary contains only file counts, extensions, changed-line counts, file categories, and generic impact signals—never source text, file paths, URLs, or concrete values. See [automatic test selection](docs/test-selection.en.md) for the full boundary.
+
 ## General version evolution
 
 `evolve` validates a baseline and a candidate with three datasets. The domain project supplies their content and interpretation.

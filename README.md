@@ -102,6 +102,29 @@ agent-eval release `
 
 每条结果会立即写入 SQLite。使用相同 `--run-id --resume` 可以跳过已经完成的 case。
 
+## 根据 Git diff 选择测试集
+
+`select-tests` 通过规则、AI 和人工三层判断当前未提交改动应跑哪套测试。确定性规则提供安全底线，AI 阅读改动判断真实影响范围，人工只复核低置信度、规则与 AI 冲突以及高风险变更。AI 不能把规则要求的测试强度降级。
+
+- `smoke`：文档、UI 和报告展示等低风险改动。
+- `regression`：Planner、Prompt、安全规则、追问策略、质检逻辑和一般行为改动。
+- `full`：生成、RAG/检索、Agent 核心逻辑或评测结果结构改动。
+
+```powershell
+# 不调用模型，只使用确定性规则
+agent-eval select-tests --repository path/to/domain-project
+
+# 本地部署模型默认读取完整 diff，不需要脱敏
+$env:AGENT_EVAL_MODEL = "local-model"
+$env:AGENT_EVAL_BASE_URL = "http://127.0.0.1:11434/v1"
+agent-eval select-tests --repository path/to/domain-project --ai-provider local
+
+# 第三方 API 强制只接收脱敏摘要
+agent-eval select-tests --repository path/to/domain-project --ai-provider remote
+```
+
+本地模式只接受回环地址、私有 IP 或 `.local` 地址，默认发送完整 diff；也可以追加 `--ai-input summary` 主动只使用摘要。远程模式不允许 `--ai-input raw`，发送的摘要只包含文件数量、扩展名、改动行数、文件类别和通用影响信号，不包含源码、文件路径、URL 或具体值。完整边界见 [测试集自动选择](docs/test-selection.md)。
+
 ## 通用版本演化
 
 `evolve` 同时验证基线版本和候选版本。三个数据集职责固定，内容和业务口径由领域项目提供：

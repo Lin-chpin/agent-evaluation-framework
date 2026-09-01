@@ -14,11 +14,14 @@ from .model import (
     ScenarioGate,
     TextCandidate,
     TextFileOperation,
+    TestImpactAssessment,
+    TestSelection,
     TraceEvent,
 )
 from .llm import OpenAICompatibleTextEvolver
 from .container_runner import build_container_command, run_agent_container
 from .process import OutputLimitExceeded, run_agent_process
+from .test_selection import select_tests
 
 __all__ = [
     "AutoEvolutionAdapter",
@@ -38,8 +41,11 @@ __all__ = [
     "ScenarioGate",
     "TextCandidate",
     "TextFileOperation",
+    "TestImpactAssessment",
+    "TestSelection",
     "TraceEvent",
     "run_agent_process",
+    "select_tests",
     "build_container_command",
     "run_agent_container",
 ]
