@@ -2,9 +2,9 @@
 
 [中文](README.md) | [English](README.en.md)
 
-A domain-independent framework for automated Agent evaluation, diagnosis, human review, regression testing, and version evolution. It supports real Agent calls, normalized traces, bounded concurrency, failure containment, isolated candidates, regression protection, and safe rollback, helping engineering teams move Agent changes from testing to release decisions.
+A domain-independent framework for automated Agent evaluation, diagnosis, human review, regression testing, and version evolution. It is primarily for validating candidate versions of Agents and Skills before they go live, helping engineering teams move changes from testing to release decisions. Fresh runs, traces, and human feedback from a live system can also feed the next iteration, while the framework never modifies or replaces the production version automatically; the business team remains responsible for release decisions.
 
-This project targets enterprise AI/Agent engineering problems and is intended for teams that need to evaluate, diagnose, regression-test, and control the evolution of AI systems.
+This project is for enterprise teams that need to evaluate, diagnose, regression-test, and control the evolution of AI systems.
 
 See [BENCHMARK_RESULTS.en.md](BENCHMARK_RESULTS.en.md) for the published results, the claims those results support, and the commands needed to reproduce them.
 
