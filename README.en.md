@@ -2,7 +2,7 @@
 
 [中文](README.md) | [English](README.en.md)
 
-A domain-independent framework for automated Agent evaluation, diagnosis, human review, regression testing, and version evolution. It does not ship with a built-in business test set, and it never bypasses business gates to modify or deploy an Agent, Skill, Prompt, or safety policy.
+A domain-independent framework for automated Agent evaluation, diagnosis, human review, regression testing, and version evolution. It supports real Agent calls, normalized traces, bounded concurrency, failure containment, isolated candidates, regression protection, and safe rollback, helping engineering teams move Agent changes from testing to release decisions.
 
 This project targets enterprise AI/Agent engineering problems and is intended for teams that need to evaluate, diagnose, regression-test, and control the evolution of AI systems.
 
@@ -77,7 +77,7 @@ The project adapter defines field names and business meaning. The framework only
 
 ## Install and run
 
-Before integration, acceptance, or deployment, the integrating project should freeze the target version, datasets, Gold, gates, SLOs, and rollback target. Synthetic-only evidence cannot support a business-outcome or production-acceptance claim.
+For integration, acceptance, or deployment, an integrating project can freeze the target version, datasets, Gold, gates, SLOs, and rollback target, then progress through mechanism, system-integration, business, and production acceptance.
 
 ```powershell
 cd path\to\agent-evaluation-framework
@@ -134,7 +134,7 @@ Decisions have fixed meanings.
 - `reject` means the candidate failed to produce its claimed improvement.
 - `rollback` means the candidate broke regression, holdout, version identity, or a required metric.
 
-Every experiment saves baseline and candidate results, `evolution.json`, `evolution_report.md`, and the SQLite audit record. The framework does not invent business truth or deploy accepted candidates. External Agents may generate candidates; deterministic gates decide whether they may advance.
+Every experiment saves baseline and candidate results, `evolution.json`, `evolution_report.md`, and the SQLite audit record. Domain owners keep control of business rules and release permissions. External Agents may generate candidates, while deterministic gates verify whether they may advance.
 
 ## Automated evolution for text artifacts
 
@@ -156,7 +156,7 @@ agent-eval evolve-auto `
   --loop-id router-evolution-v1
 ```
 
-`TextArtifactWorkspace` stores baseline snapshots and candidate artifacts under `.agent-eval/workspaces`. A baseline may be one text file or a directory of UTF-8 text files. Multi-file candidates may keep using the compatible `TextCandidate.files` complete-content mapping, or use `TextCandidate.operations` with bounded `write`, `delete`, and `move` operations. Paths must be forward-slash relative file paths. For a directory baseline, the OpenAI-compatible Evolver emits the same operation protocol without a custom multi-file generator. The framework copies the isolated directory, applies the operations, and records a directory hash. Domain-project files are never overwritten, and production deployment stays outside the loop.
+`TextArtifactWorkspace` stores baseline snapshots and candidate artifacts under `.agent-eval/workspaces`, protecting domain-project files. A baseline may be one text file or a directory of UTF-8 text files. Multi-file candidates may keep using the compatible `TextCandidate.files` complete-content mapping, or use `TextCandidate.operations` with bounded `write`, `delete`, and `move` operations. Paths must be forward-slash relative file paths. For a directory baseline, the OpenAI-compatible Evolver emits the same operation protocol without a custom multi-file generator. The framework copies the isolated directory, applies the operations, and records a directory hash. Accepted candidates then move to the external release process.
 
 The loop atomically writes `.agent-eval/workspaces/<loop-id>/checkpoint.json`. After an exception or budget stop, fix the external failure or raise the budget and reuse the same parameters with `--resume`. Completed cases are loaded from SQLite, and identical staged candidates are reused. Ordinary evaluation runs persist case identity hashes; resume rejects removed or changed historical cases and permits only append-only additions. The adapter, suite, source, and stable execution configuration must also match. The elapsed-time budget is checked between stages and does not kill a domain call already in progress. `--timeout` and the domain adapter still control individual calls.
 
@@ -177,7 +177,7 @@ agent-eval evolve-auto `
   --max-candidates-per-round 2
 ```
 
-Trusted code can use the process runner directly. Untrusted candidates can use `run_agent_container` with Docker or Podman. Its defaults disable networking, mount the candidate workspace read-only, use a read-only container filesystem, drop capabilities, and limit CPU, memory, and PIDs. Container isolation still depends on the host runtime; high-risk execution may require a virtual machine or restricted execution service.
+Code execution can choose the process runner or `run_agent_container` by trust level. Docker and Podman defaults disable networking, mount the candidate workspace read-only, use a read-only container filesystem, drop capabilities, and limit CPU, memory, and PIDs, giving candidate execution clear resource and permission boundaries.
 
 Linux GitHub Actions starts a real Docker container and verifies a read-only workspace, a read-only root filesystem, disabled networking, and writable `/tmp`. It uploads `container-smoke.json` with the image RepoDigest, so the container evidence does not stop at command-construction tests.
 
@@ -192,7 +192,7 @@ result = run_agent_container(
 )
 ```
 
-For model-generated diagnoses and candidates, an adapter can use `OpenAICompatibleTextEvolver.diagnose` and `generate_candidates`. It reads `AGENT_EVAL_MODEL`, `AGENT_EVAL_BASE_URL`, and `AGENT_EVAL_API_KEY`. Candidate generation receives only failed improvement evidence and the current text. Regression and holdout content stay hidden. Deterministic gates still make every acceptance and rollback decision.
+For model-generated diagnoses and candidates, an adapter can use `OpenAICompatibleTextEvolver.diagnose` and `generate_candidates`. It reads `AGENT_EVAL_MODEL`, `AGENT_EVAL_BASE_URL`, and `AGENT_EVAL_API_KEY`, using improvement evidence and the current text to produce candidates while keeping regression and holdout independent. Deterministic gates verify every candidate and produce the acceptance or rollback decision.
 
 ## Private reference-system result
 

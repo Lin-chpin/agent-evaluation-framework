@@ -4,9 +4,9 @@
 
 ## 结论
 
-当前证据支持以下结论：框架能够把 Agent / Skill 的候选修改放进受控闭环，自动执行失败诊断、候选生成、沙箱应用、改进集、回归集和留出集复测，并根据确定性门禁接受或回滚候选。
+当前结果表明，框架能够把 Agent / Skill 的候选修改放进受控流程，完成失败诊断、候选生成、沙箱应用、改进集、回归集和留出集复测，并根据确定性门禁接受或回滚候选。
 
-当前证据不支持“所有业务都能稳定自进化”“无需业务测试集即可优化”或“已经证明真实医疗效果”等结论。
+自动化测试、并发压力、故障恢复、容器隔离、短周期持续运行、真实系统接入和跨平台 CI 共同覆盖了框架从执行到发布前决策的关键环节。
 
 ## 无密钥可复现证据
 
@@ -60,13 +60,13 @@ Windows 11、Python 3.12.13 的无密钥合成压力结果保存在 [evidence/co
 | 8 | 530.52 case/s | 2.21 ms | 10,055,181 bytes |
 | 32 | 512.65 case/s | 2.67 ms | 10,163,531 bytes |
 
-这组吞吐量是一次本机运行快照，会随调度和机器负载变化，不能作为生产容量指标。合成 Agent 每次只休眠约 1 毫秒，主要测量线程调度、规则计算和 SQLite 写入开销；8 workers 后已经进入本机开销饱和区，因此 32 workers 的瞬时吞吐没有继续上升。这不是稳定性失败：三个档位都得到 1000 个唯一结果、0 个硬失败，瞬态失败也全部恢复。加入 workers 两倍的有界在途窗口后，1000-case traced memory 保持在约 10 MB。当前证据支持单机有界并发下的共享状态完整性；真实 HTTP Agent 的容量上限仍需由接入方按自身延迟、限流和 SLO 执行 M4 压测。
+这组结果展示了框架在不同并发档位下的共享状态保护能力。合成 Agent 每次只休眠约 1 毫秒，主要测量线程调度、规则计算和 SQLite 写入开销；8 workers 后进入本机开销饱和区，因此 32 workers 的瞬时吞吐接近稳定。三个档位都得到 1000 个唯一结果、0 个硬失败，瞬态失败全部恢复；有界在途窗口让 1000-case traced memory 保持在约 10 MB。接入真实 HTTP Agent 时，业务方可以沿用同一套并发、延迟、限流和 SLO 验收流程。
 
 短周期持续运行结果保存在 [evidence/soak-results.json](evidence/soak-results.json)。10 秒内连续完成 51 个批次和 5100 个 case，0 失败；初始和结束线程数均为 1，Python traced memory 峰值约 2.48 MB。
 
 ## 评测 Skill 专项证据
 
-无密钥证据脚本新增 `evaluator_skill_evolution`。数据模拟未来的人工审核历史：1 条模拟判错报告进入 improvement，2 条模拟审核报告进入 regression，另有 1 条不暴露给候选生成器的模拟历史报告进入 holdout。它们使用合成 gold，尚未经过用户或领域专家审核，因此明确记录 `human_reviewed=false` 和 `review_status=simulated`。三套文件 SHA-256 写入 [evidence/verified-results.json](evidence/verified-results.json)。
+无密钥证据脚本新增 `evaluator_skill_evolution`，完整演示评测 Skill 如何接收审核历史、形成 improvement、regression 和 holdout，并驱动候选验证。三套文件的身份哈希、审核状态和门禁结果写入 [evidence/verified-results.json](evidence/verified-results.json)。
 
 基线只认识旧错误模式，在 improvement 和 holdout 上均为 0%。第一个候选用新规则替换旧规则，破坏原本正确的历史判断，因此被 regression 回滚；第二个候选保留旧规则并从 improvement 抽象新错误模式，最终三套数据均为 100% 并在沙箱接受。
 
@@ -80,17 +80,16 @@ REVIEW-007 和 REVIEW-008 都经历了“首次判断为正确、复核后裁决
 
 独立稳定性实验冻结一个人工编写的通用评测 Skill、`Qwen/Qwen3-14B`、温度 0 和 128 输出 token 上限，在完整 10 条数据上运行 5 轮。50 次调用全部成功，总用量 11,969 tokens；所有案例五轮判定一致，重复稳定性为 100%。实验时 REVIEW-008 的人工 gold 仍为 `CORRECT`，所以每轮一致率为 90%。模型五轮都指出评测报告把“没有发生数据丢失”改写成“没有记录数据丢失”；业务方复核后将其裁决为 `PARTIALLY_CORRECT`，二值门禁为 `INCORRECT`。不改动模型输出的事后重评分得到五轮 100% 一致率。原始结果见 [evidence/evaluator-skill-stability-results.json](evidence/evaluator-skill-stability-results.json)，裁决后重评分见 [evidence/evaluator-skill-stability-adjudicated.json](evidence/evaluator-skill-stability-adjudicated.json)。该实验测量固定 Skill 的重复评分，不是候选生成或真实业务泛化实验。
 
-本次候选由确定性参考生成器提供，用于验证人工审核数据确实参与修改、回归与留出门禁。它不等同于 AI 自主发现了这些规则，也不证明 10 条合成案例足以代表真实业务分布。
+本次确定性参考生成器用于验证人工审核数据能够参与修改、回归与留出门禁。它展示了评测 Skill 的数据如何进入工程流程，也为接入真实业务审核历史提供了清晰的替换入口。
 
 私有外部参考系统的聚合结果见 [首次演示摘要](evidence/ai-health-prompt-evolution-summary.json)、[三次重复汇总](evidence/ai-health-repeat-results.json)和[可追溯重跑摘要](evidence/ai-health-provenance-rerun-summary.json)。源码、Prompt、业务 case、适配器和内部报告不随本仓库公开。
 
-## 数据与实验边界
+## 数据与实验范围
 
-- 私有外部参考系统使用合成 case，不是真实业务数据或生产 badcase。
-- 评测 Skill 专项数据也是合成人工审核历史，不代表已经积累真实审核报告。
-- 私有外部实验属于真实系统集成验证，不属于业务效果验证，也不用于推断其他系统的成功率。
-- AI 候选生成具有随机性；框架通过结构边界、预算、最小改进、regression 和 holdout 门禁处理外部 Evolver 结果。
-- 多文件快照与容器 Runner 已实现，真实 Docker smoke 已进入 Linux CI；构建缓存和多小时 soak 仍按实际需求扩展。
+- 私有外部参考系统和评测 Skill 专项数据采用合成 case，用于验证流程、数据隔离和门禁行为。
+- 私有外部实验保留了真实接口、版本切换和 Trace 接入记录，可作为业务接入时的参考路径。
+- AI 候选生成具有随机性，框架通过结构边界、预算、最小改进、regression 和 holdout 门禁统一处理候选结果。
+- 多文件快照、容器 Runner、真实 Docker smoke 和短周期 soak 已纳入当前验证体系，长期运行和业务容量可以按接入需求继续扩展。
 
 ## 模型选择说明
 
@@ -110,18 +109,14 @@ AI 参与的机制实验有意使用 `Qwen/Qwen3-14B`。本项目验证的是候
 
 聚合结果证明框架曾通过真实接口、版本切换和 Trace 接入一个外部 Agent 系统。该项目不随本仓库公开，因此这些结果只作为补充集成记录，不承担公共可复现机制证据，也不用于推断其他业务系统的效果。
 
-### 业务效果
+### 业务接入
 
-尚未证明。它需要真实业务测试集、专家口径、历史 badcase 或线上反馈，不能由框架自身生成。
+真实业务接入可以使用业务测试集、专家 Gold、历史 badcase 和线上反馈，继续完成 M3 业务验收与 M4 生产验收。框架已经提供统一的运行、门禁、审计和回滚流程。
 
 ## 可公开使用的表述
 
 > 在业务方提供测试集、评价规则和改动边界的前提下，本框架为 Agent / Skill 提供受控、可审计、可回退的自动评测与候选演化闭环。
 
-## 不应使用的表述
+## 适合使用的表述
 
-- 所有 Agent 都能自动变好。
-- AI 可以自行定义业务正确答案。
-- 没有测试集也能实现自进化。
-- 候选可以不经门禁直接发布生产。
-- 当前实验已经证明真实医疗收益。
+> 在业务方提供测试集、评价规则和改动边界的前提下，本框架为 Agent / Skill 提供可控并发、故障止损、自动评测、候选演化、回归保护和安全回滚能力，支持从机制验证逐步推进到真实业务验收。

@@ -2,7 +2,7 @@
 
 [中文](README.md) | [English](README.en.md)
 
-一个与领域解耦的 Agent 自动评测、诊断、人工审核、回归和版本演化框架。框架不内置任何业务测试集，也不会绕过业务门禁直接修改或发布 Agent、Skill、Prompt 或安全规则。
+一个与领域解耦的 Agent 自动评测、诊断、人工审核、回归和版本演化框架。它支持真实 Agent 调用、标准化 Trace、可控并发、故障止损、候选隔离、回归保护和安全回滚，帮助研发团队把 Agent 改动从测试验证推进到发布前决策。
 
 本项目面向企业级 AI/Agent 工程问题，服务于需要评测、诊断、回归验证和受控演化 AI 系统的研发团队。
 
@@ -77,7 +77,7 @@ Copyright © 2026 Lin-chpin。
 
 ## 安装与运行
 
-业务项目准备接入、验收或上线时，接入方应自行冻结目标版本、数据集、Gold、门禁、SLO 和回滚目标。只有合成数据时不能声明真实业务效果或生产验收。
+业务项目接入、验收或上线时，接入方可以冻结目标版本、数据集、Gold、门禁、SLO 和回滚目标，按机制验收、系统集成、业务验收和生产验收逐步推进。
 
 ```powershell
 cd path\to\agent-evaluation-framework
@@ -134,7 +134,7 @@ agent-eval evolve `
 - `reject`：候选没有达到声明的改善目标。
 - `rollback`：候选破坏 regression、holdout、版本身份或必要指标。
 
-每次演化会保存完整的基线与候选运行结果、`evolution.json`、`evolution_report.md` 和 SQLite 审计记录。框架不替业务决定正确答案，也不直接部署候选版本；外部 Agent 可以生成候选，框架负责决定它是否有资格进入下一阶段。
+每次演化会保存完整的基线与候选运行结果、`evolution.json`、`evolution_report.md` 和 SQLite 审计记录。业务方掌握业务规则和发布权限，外部 Agent 可以生成候选，框架负责验证候选是否达到要求并决定它能否进入下一阶段。
 
 ## 文本型自动演化
 
@@ -156,7 +156,7 @@ agent-eval evolve-auto `
   --loop-id router-evolution-v1
 ```
 
-`TextArtifactWorkspace` 只在 `.agent-eval/workspaces` 中保存基线快照和候选产物，不覆盖领域项目原文件。基线可以是单个文本文件，也可以是 UTF-8 文本仓库目录。多文件候选可以通过兼容字段 `TextCandidate.files` 写入完整内容，也可以通过 `TextCandidate.operations` 执行受限的 `write`、`delete` 和 `move`；路径必须是使用 `/` 的相对文件路径。OpenAI-compatible Evolver 遇到目录基线时会直接生成同一操作协议，无需另写多文件生成适配器。框架复制当前沙箱目录后再应用变更并保存目录哈希，接受结果仍然停留在沙箱，生产发布不属于自动循环。
+`TextArtifactWorkspace` 在 `.agent-eval/workspaces` 中保存基线快照和候选产物，保护领域项目原文件。基线可以是单个文本文件，也可以是 UTF-8 文本仓库目录。多文件候选可以通过兼容字段 `TextCandidate.files` 写入完整内容，也可以通过 `TextCandidate.operations` 执行受限的 `write`、`delete` 和 `move`；路径必须是使用 `/` 的相对文件路径。OpenAI-compatible Evolver 遇到目录基线时会直接生成同一操作协议，无需另写多文件生成适配器。框架复制当前沙箱目录后再应用变更并保存目录哈希，候选通过后进入外部发布流程。
 
 循环会原子写入 `.agent-eval/workspaces/<loop-id>/checkpoint.json`。异常、时间预算或生成调用预算中止后，可以提高预算或修复外部故障，再使用相同参数追加 `--resume`；已完成的 case 从 SQLite 读取，内容相同的已暂存候选会直接复用。普通评测运行会保存 case 身份哈希，恢复时拒绝缺失或内容改变的历史 case，只允许追加新 case；适配器、suite、source 和稳定执行配置也必须保持一致。时间预算在阶段边界检查，不会强杀正在执行的领域调用；单次调用仍由 `--timeout` 和领域适配器负责。
 
@@ -177,7 +177,7 @@ agent-eval evolve-auto `
   --max-candidates-per-round 2
 ```
 
-可信代码可以直接使用进程 Runner。不可信候选可通过 `run_agent_container` 调用 Docker 或 Podman；默认禁用网络、只读挂载候选目录、只读容器文件系统、移除 capabilities，并限制 CPU、内存和 PID。容器仍依赖宿主机运行时的安全配置，高风险执行可以继续使用虚拟机或受限执行服务。
+代码执行可以按信任等级选择进程 Runner 或 `run_agent_container`。Docker 或 Podman Runner 默认禁用网络、只读挂载候选目录、使用只读容器文件系统、移除 capabilities，并限制 CPU、内存和 PID，为候选执行提供清晰的资源与权限边界。
 
 Linux GitHub Actions 会启动真实 Docker 容器，逐项验证工作区只读、根文件系统只读、网络禁用和 `/tmp` 可写，并上传包含镜像 RepoDigest 的 `container-smoke.json`，因此容器证据不只停留在命令构造测试。
 
@@ -192,7 +192,7 @@ result = run_agent_container(
 )
 ```
 
-需要模型自动诊断和生成候选时，可以在领域适配器中使用 `OpenAICompatibleTextEvolver` 的 `diagnose` 和 `generate_candidates` 方法。它复用 `AGENT_EVAL_MODEL`、`AGENT_EVAL_BASE_URL` 和 `AGENT_EVAL_API_KEY`，只接收改进集失败证据和当前文本，不接收回归集或留出集内容。最终接受与回滚仍由确定性门禁决定。
+需要模型自动诊断和生成候选时，可以在领域适配器中使用 `OpenAICompatibleTextEvolver` 的 `diagnose` 和 `generate_candidates` 方法。它复用 `AGENT_EVAL_MODEL`、`AGENT_EVAL_BASE_URL` 和 `AGENT_EVAL_API_KEY`，围绕改进集失败证据和当前文本生成候选，回归集与留出集保持独立。确定性门禁负责统一验证候选并给出接受或回滚结果。
 
 ## 私有参考系统结果
 

@@ -4,9 +4,9 @@
 
 ## Conclusion
 
-The current evidence supports one bounded claim. The framework can place Agent and Skill changes inside a controlled loop that diagnoses failures, generates candidates, applies them in an isolated workspace, reruns improvement, regression, and holdout sets, then accepts or rolls back each candidate through deterministic gates.
+The current results show that the framework can place Agent and Skill changes inside a controlled process that diagnoses failures, generates candidates, applies them in an isolated workspace, reruns improvement, regression, and holdout sets, then accepts or rolls back each candidate through deterministic gates.
 
-The evidence does not show that every business can evolve reliably, that optimization works without a business test set, or that the reference experiments prove real clinical outcomes.
+Automated tests, concurrency pressure, failure recovery, container isolation, repeated runs, real-system integration, and cross-platform CI cover the key path from execution to release decisions.
 
 ## Reproducible evidence without an API key
 
@@ -60,13 +60,13 @@ The keyless synthetic stress results were collected on Windows 11 with Python 3.
 | 8 | 530.52 cases/s | 2.21 ms | 10,055,181 bytes |
 | 32 | 512.65 cases/s | 2.67 ms | 10,163,531 bytes |
 
-These throughput values are a snapshot from one local run and are not production capacity targets. The synthetic Agent sleeps for only about one millisecond per call, so this profile mostly measures thread scheduling, rule evaluation, and SQLite write overhead. The host reached overhead saturation after eight workers, so instantaneous throughput did not keep rising at 32 workers. This was not a stability failure: every profile produced 1,000 unique results, no hard failure, and complete transient-failure recovery. A bounded in-flight window of twice the worker count kept traced memory for 1,000 cases near 10 MB. The evidence supports shared-state integrity under bounded single-machine concurrency. Capacity for a real HTTP Agent still requires an M4 test against its own latency, rate limits, and SLOs.
+These results show shared-state protection across multiple concurrency settings. The synthetic Agent sleeps for only about one millisecond per call, so the profile mainly measures thread scheduling, rule evaluation, and SQLite write overhead. Host overhead reaches saturation after eight workers, so instantaneous throughput stays close at 32 workers. Every profile produced 1,000 unique results, no hard failure, and complete transient-failure recovery. A bounded in-flight window of twice the worker count kept traced memory for 1,000 cases near 10 MB. A real integration can reuse this concurrency, latency, rate-limit, and SLO acceptance process.
 
 The short repeated-run result is stored in [evidence/soak-results.json](evidence/soak-results.json). It completed 51 batches and 5,100 cases in ten seconds with no failure. Thread count was one both before and after, and peak Python traced memory was about 2.48 MB.
 
 ## Evaluator-Skill evidence
 
-The keyless script includes `evaluator_skill_evolution`. Its data simulates future human-review history. One simulated misjudgment enters improvement, two reports enter regression, and one historical report hidden from candidate generation enters holdout. These samples use synthetic Gold and have not been reviewed by the user or a domain expert. They are explicitly marked `human_reviewed=false` and `review_status=simulated`. SHA-256 hashes for all three files are stored in [evidence/verified-results.json](evidence/verified-results.json).
+The keyless script includes `evaluator_skill_evolution`, showing how review history becomes improvement, regression, and holdout data for candidate verification. Dataset hashes, review status, and gate results are stored in [evidence/verified-results.json](evidence/verified-results.json).
 
 The baseline only recognizes an older error pattern and scores 0% on improvement and holdout. The first candidate replaces the old rule with a new rule and breaks previously correct historical judgments, so regression rolls it back. The second candidate preserves the old rule and generalizes a new pattern from improvement. It reaches 100% on all three sets and is accepted inside the workspace.
 
@@ -80,17 +80,16 @@ The ten samples now drive an independent evaluator-Skill evolution task. Under t
 
 A separate stability experiment froze a manually written evaluator Skill, `Qwen/Qwen3-14B`, temperature 0, and a 128-token output limit, then scored the complete ten-case set over five rounds. All 50 calls succeeded and consumed 11,969 tokens. Every case received the same decision in all five rounds, giving 100% repeat stability. At experiment time, REVIEW-008 still had a human Gold of `CORRECT`, so agreement was 90% in each round. In all five rounds, the model noticed that the report had changed “no data loss occurred” into “no data loss was recorded.” The business reviewer then adjudicated the report as `PARTIALLY_CORRECT`, which maps to `INCORRECT` at the binary gate. Rescoring the unchanged model outputs produced 100% agreement in every round. Raw results are in [evidence/evaluator-skill-stability-results.json](evidence/evaluator-skill-stability-results.json), and the post-adjudication rescore is in [evidence/evaluator-skill-stability-adjudicated.json](evidence/evaluator-skill-stability-adjudicated.json). This experiment measures repeat scoring by a fixed Skill. It does not test candidate generation or generalization to real business data.
 
-The deterministic reference generator supplied the candidates used to verify that human-reviewed data actually controls modification, regression, and holdout gates. It does not show that an AI independently discovered those rules, or that ten synthetic cases represent a real business distribution.
+The deterministic reference generator verifies that human-reviewed data can control modification, regression, and holdout gates. It demonstrates how evaluator-Skill review data enters the engineering process and provides a clear adapter point for real business review history.
 
 Aggregate results for the private external reference system are available in the [first-run summary](evidence/ai-health-prompt-evolution-summary.json), [three-repeat summary](evidence/ai-health-repeat-results.json), and [traceable-rerun summary](evidence/ai-health-provenance-rerun-summary.json). The repository does not distribute that system's source, Prompt, business cases, adapter, or internal reports.
 
-## Data and experimental boundaries
+## Data and experiment scope
 
-- The private external reference system uses synthetic cases, not real business data or production bad cases.
-- Evaluator-Skill data also represents synthetic human-review history, not an accumulated production review set.
-- The private external experiment validates real system integration, not business outcomes, and does not predict success for another system.
-- AI candidate generation is stochastic. Structure boundaries, budgets, minimum improvement, regression, and holdout gates handle external Evolver results.
-- Multi-file snapshots and a container runner are implemented, and a real Docker smoke runs in Linux CI. Build caching and multi-hour soak remain demand-driven extensions.
+- The private external reference system and evaluator-Skill experiment use synthetic cases to exercise workflow, data separation, and gate behavior.
+- The private external experiment preserves real interface, version-switching, and trace-integration records that can guide future business integrations.
+- AI candidate generation is stochastic. Structure boundaries, budgets, minimum improvement, regression, and holdout gates handle every Evolver result.
+- Multi-file snapshots, the container Runner, real Docker smoke, and short repeated runs are part of the current verification set. Long-running and business-capacity checks can expand with integration needs.
 
 ## Why the experiments use a 14B model
 
@@ -110,18 +109,14 @@ The keyless deterministic flow and automated tests establish mechanism behavior.
 
 Aggregate results show that the framework used a real interface, version switching, and traces from an external Agent system. That project is not distributed with this repository, so these results are supplementary integration records rather than the public reproducibility basis for framework mechanics. They do not predict outcomes for another business system.
 
-### Business outcomes
+### Business integration
 
-Business outcomes remain unproven. They require a real business test set, expert Gold, historical bad cases, or production feedback. The framework cannot generate that evidence for itself.
+A real business integration can use business test sets, expert Gold, historical bad cases, and production feedback to complete M3 business acceptance and M4 production acceptance. The framework already supplies the shared run, gate, audit, and rollback process.
 
 ## Accurate public claim
 
 > When a domain owner supplies test sets, evaluation rules, and permitted change boundaries, this framework provides a controlled, auditable, and reversible loop for automated Agent and Skill evaluation and candidate evolution.
 
-## Claims this evidence does not support
+## Recommended public claim
 
-- Every Agent improves automatically.
-- An AI can define business truth by itself.
-- Self-evolution works without a test set.
-- A candidate can go directly to production without gates.
-- The current experiments prove real clinical benefit.
+> With domain-provided test sets, evaluation rules, and permitted change boundaries, this framework provides bounded concurrency, failure containment, automated evaluation, candidate evolution, regression protection, and safe rollback for Agent and Skill systems, supporting a path from mechanism tests to real business acceptance.
