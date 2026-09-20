@@ -14,7 +14,7 @@
 python -m unittest discover -s tests -q
 ```
 
-当前提交预期显示 `Ran 49 tests` 和 `OK`。这条命令只验证仓库自带测试，不调用外部模型或公开榜单接口。
+当前提交预期显示 `Ran 54 tests` 和 `OK`。这条命令只验证仓库自带测试，不调用外部模型或公开榜单接口。
 
 ## 项目流程
 
@@ -75,6 +75,40 @@ Copyright © 2026 Lin-chpin。
 - `target_type`、`target_id`、`target_version` 用于区分 Agent、普通 Skill 和测评 Skill。
 
 字段命名和业务含义由项目适配层决定，框架只读取路径和规则。
+## OpenAI Agents SDK Trace 接入
+
+如果领域 Agent 使用 OpenAI Agents SDK，可以把 SDK 的 `span.export()` 接到本项目。项目提供一个可选的本地 Processor 负责按 JSONL 保存 span，再由 `load_openai_traces` 按 `trace_id` 聚合成 `NormalizedTrace`。这一步复用 Trace 采集能力，不改变本项目的 badcase 判断、回归门禁、并发验证或候选回滚。
+
+核心依赖仍为空；只有实际使用 OpenAI Agents SDK 时，领域项目才需要单独安装对应 SDK：
+
+```powershell
+python -m pip install openai-agents
+```
+
+在 Agent 运行前安装本地 Trace Processor：
+
+```python
+from agent_eval import install_openai_trace_processor
+
+processor = install_openai_trace_processor(".agent-eval/openai-traces.jsonl")
+try:
+    result = await Runner.run(agent, input="...")
+finally:
+    processor.shutdown()
+```
+
+评测适配器加载保存的 Trace，并按 case 的 `trace_id` 返回统一结果：
+
+```python
+from agent_eval import load_openai_traces
+
+trace_index = load_openai_traces(".agent-eval/openai-traces.jsonl")
+
+def read_trace(handle, case):
+    return trace_index[case.metadata["trace_id"]]
+```
+
+Processor 只负责记录 Agent、模型和工具 span；`EvaluationEngine` 仍负责结构、行为、一致性、反馈、improvement/regression/holdout 和最终接受或回滚。OpenAI SDK 是可替换的数据采集来源，真实业务容量和压力测试仍按领域适配器及本项目现有并发验证流程执行。
 
 ## 四层评测
 
@@ -155,7 +189,7 @@ agent-eval evolve `
 
 候选清单记录目标类型、目标 ID、基线版本、候选版本、变更类型和产物位置。`change_type` 可以表示 `prompt`、`skill`、`few-shot`、`tool-policy`、`rag-config`、`output-schema` 或领域自定义类型。
 
-策略文件可以约束 regression、holdout 和数值目标。目标可以直接使用 `hard_pass`、`soft_warning_count`、`latency_ms`、`steps`，也可以从标准结果路径读取业务字段；支持 `mean`、`sum`、`min` 和 `max` 聚合，以及最大允许退化和最低改善幅度。
+策略文件可以约束 regression、holdout 和数值目标。目标可以直接使用 `hard_pass`、`soft_warning_count`、`latency_ms`、`steps`、`llm_calls`、`input_tokens`、`output_tokens`、`total_tokens` 和 `cost_usd`，也可以从标准结果路径读取业务字段；支持 `mean`、`sum`、`min` 和 `max` 聚合，以及最大允许退化和最低改善幅度。OpenAI Agents SDK Trace 会自动提供调用次数和 token 字段。
 
 `scenario_gates` 可以为高风险或小样本场景单独设置最低样本数、最低通过率和允许退化。未配置的场景继续服从整体门禁，已配置场景不会被全量平均值掩盖。示例见 [场景门禁策略](examples/evolution.scenario-policy.example.json)。
 

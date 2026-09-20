@@ -34,7 +34,7 @@ GitHub Actions 会在 Windows 和 Linux 上执行同一命令，并上传机器�
 
 | 证据 | 结果 | 能证明什么 |
 | --- | --- | --- |
-| 自动化测试 | 49/49 通过 | 规则、演化决策、场景独立门禁、严格 holdout 门禁、多轮继续、冻结数据恢复校验、空集与重复 ID 拒绝、追加式恢复身份、预算、LLM JSON 边界、候选证据隔离、Gold 复核、评测指标、跨进程互斥、SQLite 多写者、多文件操作与回滚、容器安全默认值、进程超时和输出超限终止符合当前测试口径 |
+| 自动化测试 | 54/54 通过 | 规则、演化决策、场景独立门禁、严格 holdout 门禁、多轮继续、冻结数据恢复校验、空集与重复 ID 拒绝、追加式恢复身份、预算、LLM JSON 边界、候选证据隔离、Gold 复核、评测指标、跨进程互斥、SQLite 多写者、多文件操作与回滚、容器安全默认值、进程超时和输出超限终止符合当前测试口径 |
 | 确定性文本演化 | 坏候选 rollback，好候选 accept | 三数据集门禁能够阻止破坏留出集的候选，并保留安全改进 |
 | 代码 Agent 演化 | 坏代码 rollback，好代码 accept；文本文件写入、删除和移动均进入候选目录 | 单文件和多文件目录候选能在独立工作区进入同一演化闭环，文件操作受路径和冲突校验，回滚不覆盖基线 |
 | 评测 Skill 演化 | 坏候选 rollback，好候选 accept；improvement 0% → 100%，regression 100% → 100%，holdout 0% → 100% | 模拟审核报告可以按 improvement/regression/holdout 进入评测 Skill 自身的受控回放闭环 |
@@ -49,6 +49,9 @@ GitHub Actions 会在 Windows 和 Linux 上执行同一命令，并上传机器�
 | 并发故障记账与恢复 | 5 个永久失败均被记录；500 → 1000 case 恢复后得到 1000 个唯一结果；两个进程写入 50 个不同运行无丢失 | 永久错误不会被吞掉，分段恢复和 SQLite 多写者保持记录完整性 |
 | 真实容器 smoke | Linux CI 中工作区只读、根文件系统只读、网络禁用、`/tmp` 可写全部通过 | Docker 默认隔离已经由真实容器行为验证，不只验证命令字符串 |
 | 短周期 soak | 10 秒、51 个连续批次、5100 个 case、0 失败；初始和结束线程数均为 1 | 重复运行期间结果完整，线程池在每批结束后回收 |
+| 多进程 scale-out 参考矩阵 | 4 种负载 × 1/2/4/8 个 runner 进程，最高 64 个总 workers；16/16 拓扑结果完整，0 硬失败 | 同机多进程共享 SQLite WAL 时结果、run 身份和重试记账保持完整；不替代多主机生产容量验收 |
+| Docker Compose 容器拓扑矩阵 | 4 种负载 × 8 个 runner 容器 × 8 workers；每档 2,000/2,000/2,000 结果完整，0 硬失败，24/24 瞬态失败恢复 | 验证 Compose 服务发现、容器间 HTTP 调用、named volume 结果汇总和拓扑内完整性；仍不替代多主机或生产容量验收 |
+| BFCL 阶段 A 适配器自检 | JSONL 契约、工具调用规范化、正确调用接受、漏调用/错参数/多调用拒绝和 `NormalizedTrace` 转换通过；0 次模型调用 | 证明公开 BFCL 数据接入框架 Case/Trace/门禁的链路可运行；不是 BFCL 官方成绩，也不证明模型工具调用质量 |
 
 ## 单机并发基线
 
@@ -63,6 +66,27 @@ Windows 11、Python 3.12.13 的无密钥合成压力结果保存在 [evidence/co
 这组结果展示了框架在不同并发档位下的共享状态保护能力。合成 Agent 每次只休眠约 1 毫秒，主要测量线程调度、规则计算和 SQLite 写入开销；8 workers 后进入本机开销饱和区，因此 32 workers 的瞬时吞吐接近稳定。三个档位都得到 1000 个唯一结果、0 个硬失败，瞬态失败全部恢复；有界在途窗口让 1000-case traced memory 保持在约 10 MB。接入真实 HTTP Agent 时，业务方可以沿用同一套并发、延迟、限流和 SLO 验收流程。
 
 短周期持续运行结果保存在 [evidence/soak-results.json](evidence/soak-results.json)。10 秒内连续完成 51 个批次和 5100 个 case，0 失败；初始和结束线程数均为 1，Python traced memory 峰值约 2.48 MB。
+
+## 多进程 scale-out 参考矩阵
+
+无密钥 scale-out 结果保存在 [evidence/scale-out-results.json](evidence/scale-out-results.json)，由 [scripts/verify_scale_out.py](scripts/verify_scale_out.py) 复现。测试使用 4 种可配置合成负载：短 I/O、长 I/O、大 Trace 和混合长尾；每个拓扑的独立 runner 进程同时写入自己的 run，并共享同一个 SQLite WAL 数据库。
+
+本次 Windows 11、Python 3.13.5 运行覆盖 1/2/4/8 个 runner 进程和 8 workers/进程，最高为 64 个总 workers。16 个拓扑全部得到预期 case 数、唯一结果数和 run/result 记录，所有注入的瞬时失败均经一次重试恢复，0 个硬失败，0 个进程超时。
+
+该证据的 `status` 为 `passed`，但 `claim_status` 为 `not_claimable`，因为仓库没有替业务或部署环境臆造 P95、吞吐、成本和资源 SLO。它支持同机多进程 scale-out 的框架机制声明，不支持任意业务、任意多主机拓扑或生产集群的统一容量声明。生产验收入口见 [docs/生产级并发验收.md](docs/生产级并发验收.md)。
+
+## Docker Compose 容器拓扑
+
+真实 Docker Desktop 恢复后，使用 [scripts/verify_distributed_compose.py](scripts/verify_distributed_compose.py) 完成四类负载的 Compose 矩阵。每档使用 8 个 runner 容器、每个 8 workers、250 cases/runner，并通过 Compose 网络访问 Agent stub；runner-local SQLite 文件写入 Docker named volume，由 collector 汇总到公开证据目录。
+
+| Profile | P95 Agent latency | Throughput | Results | Hard failures | Transient failures |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| `short_io` | 1.9285 ms | 1657.49 case/s | 2000/2000 unique | 0 | 24/24 recovered |
+| `long_io` | 21.4872 ms | 1671.95 case/s | 2000/2000 unique | 0 | 24/24 recovered |
+| `trace_heavy` | 6.2671 ms | 1621.97 case/s | 2000/2000 unique | 0 | 24/24 recovered |
+| `mixed_io` | 10.4834 ms | 1598.87 case/s | 2000/2000 unique | 0 | 24/24 recovered |
+
+机器证据分别保存在 [short_io](evidence/distributed-compose-short_io-20260918.json)、[long_io](evidence/distributed-compose-long_io-20260918.json)、[trace_heavy](evidence/distributed-compose-trace_heavy-20260918.json) 和 [mixed_io](evidence/distributed-compose-mixed_io-20260918.json)。四档均为 `status=passed`，但仍为 `claim_status=not_claimable`：所有容器位于同一物理主机，每个 runner 使用独立 SQLite，Agent stub 为合成服务，尚未验证多主机、共享生产存储、真实上游或业务质量。
 
 ## 评测 Skill 专项证据
 
@@ -113,10 +137,5 @@ AI 参与的机制实验有意使用 `Qwen/Qwen3-14B`。本项目验证的是候
 
 真实业务接入可以使用业务测试集、专家 Gold、历史 badcase 和线上反馈，继续完成 M3 业务验收与 M4 生产验收。框架已经提供统一的运行、门禁、审计和回滚流程。
 
-## 可公开使用的表述
-
-> 在业务方提供测试集、评价规则和改动边界的前提下，本框架为 Agent / Skill 提供受控、可审计、可回退的自动评测与候选演化闭环。
-
-## 适合使用的表述
 
 > 在业务方提供测试集、评价规则和改动边界的前提下，本框架为 Agent / Skill 提供可控并发、故障止损、自动评测、候选演化、回归保护和安全回滚能力，支持从机制验证逐步推进到真实业务验收。

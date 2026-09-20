@@ -1,0 +1,50 @@
+services:
+  agent-stub:
+    image: python:3.12-slim
+    working_dir: /workspace
+    volumes:
+      - ./:/workspace:ro
+    ports:
+      - "127.0.0.1:18080:8080"
+    command: ["python", "scripts/verify_distributed_compose.py", "--mode", "stub", "--host", "0.0.0.0", "--port", "8080"]
+
+  runner:
+    image: python:3.12-slim
+    working_dir: /workspace
+    depends_on:
+      - agent-stub
+    environment:
+      PYTHONPATH: /workspace/src
+      PYTHONUNBUFFERED: "1"
+      AGENT_STUB_URL: http://agent-stub:8080/invoke
+      PROFILE: ${PROFILE:-mixed_io}
+      WORKERS: ${WORKERS:-8}
+      CASES_PER_RUNNER: ${CASES_PER_RUNNER:-250}
+      RESULTS_DIR: /results
+    volumes:
+      - ./:/workspace:ro
+      - distributed-results:/results
+    command: ["python", "scripts/verify_distributed_compose.py", "--mode", "runner"]
+
+  collector:
+    image: python:3.12-slim
+    working_dir: /workspace
+    environment:
+      PYTHONPATH: /workspace/src
+      PYTHONUNBUFFERED: "1"
+      EXPECTED_RUNNERS: ${EXPECTED_RUNNERS:-8}
+      CASES_PER_RUNNER: ${CASES_PER_RUNNER:-250}
+      MAX_P95_AGENT_MS: ${MAX_P95_AGENT_MS:-25}
+      MIN_THROUGHPUT: ${MIN_THROUGHPUT:-300}
+      TOPOLOGY: single-host Docker Compose logical distributed runners
+      RESULTS_DIR: /results
+      OUTPUT: /export/aggregate.json
+    volumes:
+      - ./:/workspace:ro
+      - distributed-results:/results
+      - ${DISTRIBUTED_RESULTS_DIR:-./tmp/distributed-compose}:/export
+    command: ["python", "scripts/verify_distributed_compose.py", "--mode", "collect"]
+
+volumes:
+  distributed-results:
+    name: ${DISTRIBUTED_RESULTS_VOLUME:-agent-eval-distributed-results}

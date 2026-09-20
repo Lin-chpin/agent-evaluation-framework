@@ -38,17 +38,55 @@ def _aggregate(values: list[float], aggregation: str) -> float | None:
     return sum(values) / len(values)
 
 
+def _trace_metric(trace: Mapping[str, Any], metric: str) -> float | None:
+    fields = trace.get("fields") or {}
+    aliases = {
+        "model_calls": "llm_call_count",
+        "llm_calls": "llm_call_count",
+        "tokens": "total_tokens",
+    }
+    field_name = aliases.get(metric, metric)
+    value = fields.get(field_name)
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        return float(value)
+    if metric in {"latency_ms", "duration_ms"}:
+        return sum(float(event.get("duration_ms", 0)) for event in trace.get("events", []))
+    if metric == "steps":
+        return float(len(trace.get("events", [])))
+    if metric in {"model_calls", "llm_calls"}:
+        return float(
+            sum(
+                str(event.get("fields", {}).get("span_type", ""))
+                in {"generation", "response"}
+                for event in trace.get("events", [])
+            )
+        )
+    return None
+
+
 def _objective_value(summary: Mapping[str, Any], objective: MetricObjective) -> float | None:
     values: list[float] = []
     for result in summary["results"]:
         trace = result.get("trace") or {}
-        events = trace.get("events", [])
         builtins = {
             "hard_pass": float(bool(result.get("hard_pass"))),
             "soft_warning_count": float(result.get("soft_warning_count", 0)),
-            "latency_ms": sum(float(event.get("duration_ms", 0)) for event in events),
-            "steps": float(len(events)),
         }
+        for metric in (
+            "latency_ms",
+            "duration_ms",
+            "steps",
+            "model_calls",
+            "llm_calls",
+            "input_tokens",
+            "output_tokens",
+            "total_tokens",
+            "tokens",
+            "cost_usd",
+        ):
+            value = _trace_metric(trace, metric)
+            if value is not None:
+                builtins[metric] = value
         value = builtins.get(objective.metric)
         if value is None:
             value = read_path(result, objective.metric)
@@ -68,6 +106,21 @@ def summarize_metrics(
         events = (result.get("trace") or {}).get("events", [])
         latencies.append(sum(float(event.get("duration_ms", 0)) for event in events))
         steps.append(float(len(events)))
+    efficiency: dict[str, float | None] = {}
+    for metric in (
+        "llm_calls",
+        "input_tokens",
+        "output_tokens",
+        "total_tokens",
+        "cost_usd",
+    ):
+        values = [
+            value
+            for result in results
+            for value in [_trace_metric(result.get("trace") or {}, metric)]
+            if value is not None
+        ]
+        efficiency[f"mean_{metric}"] = _aggregate(values, "mean")
     return {
         "case_count": case_count,
         "hard_failures": summary["hard_failures"],
@@ -77,6 +130,7 @@ def summarize_metrics(
         "soft_warning_count": summary["soft_warnings"],
         "mean_latency_ms": _aggregate(latencies, "mean") or 0,
         "mean_steps": _aggregate(steps, "mean") or 0,
+        "efficiency": efficiency,
         "objectives": {
             objective.name: _objective_value(summary, objective) for objective in objectives
         },

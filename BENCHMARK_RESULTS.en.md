@@ -34,7 +34,7 @@ Each dataset has two identities. `source_file_sha256` is the byte-level hash of 
 
 | Evidence | Result | What it supports |
 | --- | --- | --- |
-| Automated tests | 49/49 passed | Current tests cover rules, evolution decisions, independent scenario gates, strict holdout gating, continued multi-round improvement, frozen-dataset resume checks, empty-suite and duplicate-ID rejection, append-only resume identity, budgets, LLM JSON boundaries, candidate-evidence isolation, Gold adjudication, evaluator metrics, cross-process locking, concurrent SQLite writers, multi-file operations and rollback, container security defaults, process timeouts, and output-limit termination. |
+| Automated tests | 54/54 passed | Current tests cover rules, evolution decisions, independent scenario gates, strict holdout gating, continued multi-round improvement, frozen-dataset resume checks, empty-suite and duplicate-ID rejection, append-only resume identity, budgets, LLM JSON boundaries, candidate-evidence isolation, Gold adjudication, evaluator metrics, cross-process locking, concurrent SQLite writers, multi-file operations and rollback, container security defaults, process timeouts, and output-limit termination. |
 | Deterministic text evolution | Harmful candidate rolled back; safe candidate accepted | Three-set gating blocks a candidate that damages holdout while preserving a safe improvement. |
 | Code Agent evolution | Harmful code rolled back; safe code accepted. Text-file writes, deletes, and moves were applied only in candidate directories. | Single-file and multi-file candidates enter the same loop. Path and conflict checks constrain file operations, and rollback does not overwrite the baseline. |
 | Evaluator-Skill evolution | Harmful candidate rolled back; safe candidate accepted. Improvement 0% to 100%, regression 100% to 100%, holdout 0% to 100%. | Simulated review reports can drive a controlled evaluator-Skill replay across improvement, regression, and holdout. |
@@ -49,6 +49,9 @@ Each dataset has two identities. `source_file_sha256` is the byte-level hash of 
 | Failure accounting and resume | All five permanent failures were recorded. Resuming from 500 to 1,000 cases produced 1,000 unique results. Two processes wrote 50 separate runs without loss. | Permanent errors are not swallowed. Staged resume and concurrent SQLite writers preserve record integrity. |
 | Real container smoke | Read-only workspace, read-only root filesystem, disabled networking, and writable `/tmp` all passed in Linux CI. | Docker defaults are verified through real container behavior rather than only command strings. |
 | Short soak | 10 seconds, 51 consecutive batches, 5,100 cases, no failure, and one thread both before and after | Results remain complete across repeated runs and worker threads are reclaimed after each batch. |
+| Multi-process scale-out reference matrix | Four workload profiles × 1/2/4/8 runner processes, up to 64 total workers; all 16 topology runs preserved results with no hard failure | Shared SQLite WAL remains complete across same-host runner processes; this does not replace multi-host production-capacity validation. |
+| Docker Compose container topology matrix | Four workload profiles × 8 runner containers × 8 workers; each profile preserved 2,000/2,000/2,000 results with no hard failure and recovered 24/24 transient failures | Verifies Compose service discovery, container HTTP calls, named-volume collection, and topology integrity; it does not replace multi-host or production-capacity validation. |
+| BFCL phase-A adapter self-check | JSONL contract, tool-call normalization, correct-call acceptance, missing/wrong/extra-call rejection, and `NormalizedTrace` conversion passed; zero model calls | Shows that public BFCL data can enter the framework Case/Trace/gate path; it is not an official BFCL score and says nothing about model tool-calling quality. |
 
 ## Single-machine concurrency baseline
 
@@ -63,6 +66,22 @@ The keyless synthetic stress results were collected on Windows 11 with Python 3.
 These results show shared-state protection across multiple concurrency settings. The synthetic Agent sleeps for only about one millisecond per call, so the profile mainly measures thread scheduling, rule evaluation, and SQLite write overhead. Host overhead reaches saturation after eight workers, so instantaneous throughput stays close at 32 workers. Every profile produced 1,000 unique results, no hard failure, and complete transient-failure recovery. A bounded in-flight window of twice the worker count kept traced memory for 1,000 cases near 10 MB. A real integration can reuse this concurrency, latency, rate-limit, and SLO acceptance process.
 
 The short repeated-run result is stored in [evidence/soak-results.json](evidence/soak-results.json). It completed 51 batches and 5,100 cases in ten seconds with no failure. Thread count was one both before and after, and peak Python traced memory was about 2.48 MB.
+
+## Multi-process scale-out reference matrix
+
+The keyless scale-out result is stored in [evidence/scale-out-results.json](evidence/scale-out-results.json) and can be reproduced with [scripts/verify_scale_out.py](scripts/verify_scale_out.py). It uses four configurable synthetic profiles: short I/O, long I/O, large traces, and mixed long-tail work. Independent runner processes write separate runs while sharing one SQLite WAL database.
+
+The Windows 11, Python 3.13.5 run covered 1/2/4/8 runner processes with eight workers per process, reaching 64 total workers. All 16 topologies produced the expected case count, unique result count, and run/result records; every injected transient failure recovered after one retry, with no hard failure or process timeout.
+
+The evidence has `status=passed` but `claim_status=not_claimable` because the repository does not invent P95, throughput, cost, or resource SLOs for a deployment. It supports a same-host multi-process framework-mechanics claim, not a universal capacity claim for arbitrary business workloads, multi-host topologies, or production clusters. The production acceptance entry point is [docs/生产级并发验收.md](docs/生产级并发验收.md).
+
+## Docker Compose container topology
+
+After Docker Desktop was restored, the project ran the four workload profiles through [scripts/verify_distributed_compose.py](scripts/verify_distributed_compose.py). Each profile used eight runner containers, eight workers per runner, 250 cases per runner, a Compose-network Agent stub, runner-local SQLite files on a Docker named volume, and a collector.
+
+The final P95 / throughput results were `short_io` 1.9285 ms / 1657.49 case/s, `long_io` 21.4872 ms / 1671.95 case/s, `trace_heavy` 6.2671 ms / 1621.97 case/s, and `mixed_io` 10.4834 ms / 1598.87 case/s. Every profile produced 2,000 unique results, zero hard failures, and recovered all 24 injected transient failures. The machine-readable evidence is stored in [short_io](evidence/distributed-compose-short_io-20260918.json), [long_io](evidence/distributed-compose-long_io-20260918.json), [trace_heavy](evidence/distributed-compose-trace_heavy-20260918.json), and [mixed_io](evidence/distributed-compose-mixed_io-20260918.json).
+
+These results remain `claim_status=not_claimable`: all containers ran on one physical host, each runner used its own SQLite database, the Agent stub was synthetic, and multi-host, shared production storage, real upstream capacity, and business quality were not validated.
 
 ## Evaluator-Skill evidence
 

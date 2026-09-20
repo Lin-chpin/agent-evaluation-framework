@@ -14,7 +14,7 @@ The lowest-cost verification requires no API key. With Python 3.11 or newer, run
 python -m unittest discover -s tests -q
 ```
 
-The current revision is expected to print `Ran 49 tests` and `OK`. This command runs only the repository's built-in tests. It does not call an external model or public leaderboard service.
+The current revision is expected to print `Ran 54 tests` and `OK`. This command runs only the repository's built-in tests. It does not call an external model or public leaderboard service.
 
 ## Project flow
 
@@ -75,6 +75,40 @@ Supporting services: SQLite, Markdown/JSON, human review, optional LLM, few-shot
 - `target_type`, `target_id`, and `target_version` distinguish Agents, ordinary Skills, and evaluator Skills.
 
 The project adapter defines field names and business meaning. The framework only reads declared paths and rules.
+## OpenAI Agents SDK Trace integration
+
+If the domain Agent uses the OpenAI Agents SDK, its `span.export()` output can feed this project. The project provides an optional local Processor that writes spans as JSONL, and `load_openai_traces` groups them by `trace_id` into `NormalizedTrace`. This reuses trace collection without replacing the project's bad-case decisions, regression gates, concurrency checks, or candidate rollback.
+
+The core package still has no required dependencies. A domain project only needs to install the OpenAI Agents SDK when it uses that SDK at runtime:
+
+```powershell
+python -m pip install openai-agents
+```
+
+Install the local Trace Processor before running the Agent:
+
+```python
+from agent_eval import install_openai_trace_processor
+
+processor = install_openai_trace_processor(".agent-eval/openai-traces.jsonl")
+try:
+    result = await Runner.run(agent, input="...")
+finally:
+    processor.shutdown()
+```
+
+The evaluation adapter can load the saved traces and return the matching normalized trace for each case:
+
+```python
+from agent_eval import load_openai_traces
+
+trace_index = load_openai_traces(".agent-eval/openai-traces.jsonl")
+
+def read_trace(handle, case):
+    return trace_index[case.metadata["trace_id"]]
+```
+
+The Processor only records Agent, model, and tool spans. `EvaluationEngine` still owns structure, behavior, consistency, feedback, improvement/regression/holdout checks, and the final accept or rollback decision. OpenAI SDK tracing is a replaceable ingestion source; real business capacity and pressure testing still use the domain adapter and the framework's existing concurrency verification flow.
 
 ## Four evaluation layers
 
@@ -155,7 +189,7 @@ agent-eval evolve `
 
 The candidate manifest records the target type, target ID, baseline version, candidate version, change type, and artifact path. `change_type` may represent `prompt`, `skill`, `few-shot`, `tool-policy`, `rag-config`, `output-schema`, `code`, or a domain-specific change.
 
-A policy may constrain regression, holdout, and numeric objectives. Objectives may use `hard_pass`, `soft_warning_count`, `latency_ms`, and `steps`, or read business values from standard result paths. Supported aggregations are `mean`, `sum`, `min`, and `max`, with limits for regression and minimum improvement.
+A policy may constrain regression, holdout, and numeric objectives. Objectives may use `hard_pass`, `soft_warning_count`, `latency_ms`, `steps`, `llm_calls`, `input_tokens`, `output_tokens`, `total_tokens`, and `cost_usd`, or read business values from standard result paths. Supported aggregations are `mean`, `sum`, `min`, and `max`, with limits for regression and minimum improvement. OpenAI Agents SDK traces provide call-count and token fields automatically.
 
 `scenario_gates` can set an independent minimum sample count, pass rate, and regression allowance for high-risk or small scenarios. Unconfigured scenarios still use the aggregate policy, while configured scenarios cannot be hidden by the overall average. See the [scenario-gate policy example](examples/evolution.scenario-policy.example.json).
 

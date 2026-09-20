@@ -1,0 +1,23 @@
+{
+  "require_regression_pass": true,
+  "require_holdout_pass": true,
+  "require_improvement": true,
+  "objectives": [
+    {
+      "name": "llm_calls",
+      "metric": "llm_calls",
+      "direction": "minimize",
+      "minimum_improvement": 1,
+      "maximum_regression": 0,
+      "required": true
+    },
+    {
+      "name": "total_tokens",
+      "metric": "total_tokens",
+      "direction": "minimize",
+      "minimum_improvement": 100,
+      "maximum_regression": 0,
+      "required": true
+    }
+  ]
+}
