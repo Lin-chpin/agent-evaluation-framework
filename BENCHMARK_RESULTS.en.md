@@ -75,6 +75,12 @@ The Windows 11, Python 3.13.5 run covered 1/2/4/8 runner processes with eight wo
 
 The evidence has `status=passed` but `claim_status=not_claimable` because the repository does not invent P95, throughput, cost, or resource SLOs for a deployment. It supports a same-host multi-process framework-mechanics claim, not a universal capacity claim for arbitrary business workloads, multi-host topologies, or production clusters. The production acceptance entry point is [docs/生产级并发验收.md](docs/生产级并发验收.md).
 
+Run the following command to reproduce the published four-profile × 1/2/4/8-runner matrix with the 25 ms P95 and 300 case/s reference gates:
+
+```powershell
+python scripts/verify_scale_out.py --output evidence/reproduced-scale-out.json --max-p95-agent-ms 25 --min-throughput 300
+```
+
 ## Docker Compose container topology
 
 After Docker Desktop was restored, the project ran the four workload profiles through [scripts/verify_distributed_compose.py](scripts/verify_distributed_compose.py). Each profile used eight runner containers, eight workers per runner, 250 cases per runner, a Compose-network Agent stub, runner-local SQLite files on a Docker named volume, and a collector.
@@ -82,6 +88,17 @@ After Docker Desktop was restored, the project ran the four workload profiles th
 The final P95 / throughput results were `short_io` 1.9285 ms / 1657.49 case/s, `long_io` 21.4872 ms / 1671.95 case/s, `trace_heavy` 6.2671 ms / 1621.97 case/s, and `mixed_io` 10.4834 ms / 1598.87 case/s. Every profile produced 2,000 unique results, zero hard failures, and recovered all 24 injected transient failures. The machine-readable evidence is stored in [short_io](evidence/distributed-compose-short_io-20260918.json), [long_io](evidence/distributed-compose-long_io-20260918.json), [trace_heavy](evidence/distributed-compose-trace_heavy-20260918.json), and [mixed_io](evidence/distributed-compose-mixed_io-20260918.json).
 
 These results remain `claim_status=not_claimable`: all containers ran on one physical host, each runner used its own SQLite database, the Agent stub was synthetic, and multi-host, shared production storage, real upstream capacity, and business quality were not validated.
+
+### Compose matrix reproduction commands
+
+Run one profile at a time with the following four commands. The `reproduced-` output names avoid overwriting the repository's reference evidence:
+
+```powershell
+python scripts/verify_distributed_compose.py --profile short_io --runners 8 --workers 8 --cases-per-runner 250 --output evidence/reproduced-compose-short_io.json
+python scripts/verify_distributed_compose.py --profile trace_heavy --runners 8 --workers 8 --cases-per-runner 250 --output evidence/reproduced-compose-trace_heavy.json
+python scripts/verify_distributed_compose.py --profile mixed_io --runners 8 --workers 8 --cases-per-runner 250 --output evidence/reproduced-compose-mixed_io.json
+python scripts/verify_distributed_compose.py --profile long_io --runners 8 --workers 8 --cases-per-runner 250 --output evidence/reproduced-compose-long_io.json
+```
 
 ## Evaluator-Skill evidence
 

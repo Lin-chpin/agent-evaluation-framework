@@ -79,6 +79,17 @@ Windows 11、Python 3.12.13 的无密钥合成压力结果保存在 [evidence/co
 
 真实 Docker Desktop 恢复后，使用 [scripts/verify_distributed_compose.py](scripts/verify_distributed_compose.py) 完成四类负载的 Compose 矩阵。每档使用 8 个 runner 容器、每个 8 workers、250 cases/runner，并通过 Compose 网络访问 Agent stub；runner-local SQLite 文件写入 Docker named volume，由 collector 汇总到公开证据目录。
 
+### Compose 矩阵复现命令
+
+每次运行一个 profile，使用以下四条命令复现同样的 8 runner × 8 workers × 250 cases/runner 配置。输出文件名使用 `reproduced-` 前缀，避免覆盖仓库中的参考证据：
+
+```powershell
+python scripts/verify_distributed_compose.py --profile short_io --runners 8 --workers 8 --cases-per-runner 250 --output evidence/reproduced-compose-short_io.json
+python scripts/verify_distributed_compose.py --profile trace_heavy --runners 8 --workers 8 --cases-per-runner 250 --output evidence/reproduced-compose-trace_heavy.json
+python scripts/verify_distributed_compose.py --profile mixed_io --runners 8 --workers 8 --cases-per-runner 250 --output evidence/reproduced-compose-mixed_io.json
+python scripts/verify_distributed_compose.py --profile long_io --runners 8 --workers 8 --cases-per-runner 250 --output evidence/reproduced-compose-long_io.json
+```
+
 | Profile | P95 Agent latency | Throughput | Results | Hard failures | Transient failures |
 | --- | ---: | ---: | ---: | ---: | ---: |
 | `short_io` | 1.9285 ms | 1657.49 case/s | 2000/2000 unique | 0 | 24/24 recovered |

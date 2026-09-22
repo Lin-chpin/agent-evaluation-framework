@@ -27,4 +27,19 @@ With Docker installed and running, you can also execute the real container-isola
 python scripts/verify_container.py --output evidence/container-smoke-results.json
 ```
 
+You can also reproduce the Docker Compose container-topology matrix. Run the following four commands separately; each uses 8 runners, 8 workers per runner, and 250 cases per runner:
+
+```powershell
+python scripts/verify_distributed_compose.py --profile short_io --runners 8 --workers 8 --cases-per-runner 250 --output evidence/reproduced-compose-short_io.json
+python scripts/verify_distributed_compose.py --profile trace_heavy --runners 8 --workers 8 --cases-per-runner 250 --output evidence/reproduced-compose-trace_heavy.json
+python scripts/verify_distributed_compose.py --profile mixed_io --runners 8 --workers 8 --cases-per-runner 250 --output evidence/reproduced-compose-mixed_io.json
+python scripts/verify_distributed_compose.py --profile long_io --runners 8 --workers 8 --cases-per-runner 250 --output evidence/reproduced-compose-long_io.json
+```
+
+To reproduce the same-host multi-process scale-out matrix:
+
+```powershell
+python scripts/verify_scale_out.py --output evidence/reproduced-scale-out.json --max-p95-agent-ms 25 --min-throughput 300
+```
+
 By submitting a contribution, you confirm that you have the right to provide it and agree to release it under the repository's [PolyForm Noncommercial License 1.0.0](LICENSE). A contribution does not grant commercial-use permission.
