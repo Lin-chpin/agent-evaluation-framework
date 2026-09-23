@@ -6,6 +6,8 @@
 
 本项目面向需要评测、诊断、回归验证和受控演化 AI 系统的企业级研发团队。
 
+按核心模块、失败归因后的双 Loop、Bad Case 回归资产及门禁设计逐项对照，我认为本项目与美团公开方法的核心工程框架相似度接近 80%（个人工程估算）；双方在模块划分、在线数据接入和生产发布范围上仍有差异，详见[时间线与工程对照](docs/agent-evaluation-practice-comparison/README.md)。
+
 公开测试结果、可支持的结论和一键复现方式见 [BENCHMARK_RESULTS.md](BENCHMARK_RESULTS.md)。
 
 最低成本验证不需要 API Key。在 Python 3.11 或更高版本中运行：
