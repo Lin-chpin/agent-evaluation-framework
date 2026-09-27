@@ -2,6 +2,10 @@
 
 [中文](README.md) | [English](README.en.md)
 
+[![License: PolyForm Noncommercial](https://img.shields.io/badge/License-PolyForm%20Noncommercial-red)](LICENSE)
+
+**仅限非商业用途。商业使用须取得明确的书面许可。详见 [LICENSE](LICENSE)。**
+
 一个与领域解耦的 Agent 自动评测、诊断、人工审核、回归和版本演化框架。它主要用于 Agent 和 Skill 上线前的候选版本验证，帮助研发团队把改动从测试验证推进到发布决策。线上系统产生的 fresh run、Trace 和人工反馈也可以回流到下一轮迭代，但框架不会自动修改或替换生产版本，发布权限仍由业务方掌握。
 
 本项目面向需要评测、诊断、回归验证和受控演化 AI 系统的企业级研发团队。

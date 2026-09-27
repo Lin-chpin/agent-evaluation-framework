@@ -2,6 +2,10 @@
 
 [中文](README.md) | [English](README.en.md)
 
+[![License: PolyForm Noncommercial](https://img.shields.io/badge/License-PolyForm%20Noncommercial-red)](LICENSE)
+
+**Non-commercial use only. Commercial use requires explicit written permission. See [LICENSE](LICENSE).**
+
 A domain-independent framework for automated Agent evaluation, diagnosis, human review, regression testing, and version evolution. It is primarily for validating candidate versions of Agents and Skills before they go live, helping engineering teams move changes from testing to release decisions. Fresh runs, traces, and human feedback from a live system can also feed the next iteration, while the framework never modifies or replaces the production version automatically; the business team remains responsible for release decisions.
 
 This project is for enterprise teams that need to evaluate, diagnose, regression-test, and control the evolution of AI systems.
