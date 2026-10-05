@@ -148,7 +148,7 @@ agent-eval release `
   --full path/to/full.jsonl
 ```
 
-每条结果会立即写入 SQLite。使用相同 `--run-id --resume` 可以跳过已经完成的 case。
+结果以最多 32 条的有界批次写入 SQLite；异常退出后，未提交的批次会在断点恢复时重跑。若需要断点恢复，首次运行和恢复运行都传入同一个 `--run-id` 与 `--run-identity`（绑定适配器和被测产物的稳定身份），恢复时再加 `--resume`；身份不一致会拒绝复用旧结果。
 
 ## 根据 Git diff 选择测试集
 
@@ -172,6 +172,41 @@ agent-eval select-tests --repository path/to/domain-project --ai-provider remote
 ```
 
 本地模式只接受回环地址、私有 IP 或 `.local` 地址，默认发送完整 diff；也可以追加 `--ai-input summary` 主动只使用摘要。远程模式不允许 `--ai-input raw`，发送的摘要只包含文件数量、扩展名、改动行数、文件类别和通用影响信号，不包含源码、文件路径、URL 或具体值。完整边界见 [测试集自动选择](docs/test-selection.md)。
+
+## AI 代码变更范围审计
+
+`audit-scope` 对比两个已提交版本，复用上述 Diff 影响规则选择套件，再用已有 `ProjectAdapter`、case JSONL 和评测引擎运行可用测试。先让被审计仓库检出目标 commit 且保持干净；适配器须实际评测该版本。审计只读被审计代码，不会修改或回滚它。
+
+任务说明写成 JSON，例如：
+
+```json
+{
+  "requirement": "将订单金额计算改为按新规则取整",
+  "acceptance_criteria": ["金额结果符合新规则", "现有支付流程保持可用"],
+  "allowed_paths": ["src/orders/**", "tests/orders/**"],
+  "forbidden_paths": ["src/payments/**"]
+}
+```
+
+```powershell
+agent-eval audit-scope `
+  --repository path/to/target-repo --base BASE_COMMIT --target TARGET_COMMIT `
+  --spec path/to/task.json --adapter path/to/adapter.py `
+  --regression path/to/regression.jsonl --smoke path/to/smoke.jsonl `
+  --full path/to/full.jsonl --output path/to/audit-output
+```
+
+输出 `scope_audit.json`、`report.md`、完整 `diff.patch` 和已运行套件的原有评测报告。明确禁止路径属于确定性越界；允许路径内新增或改变未提及的公开声明、以及允许范围外的文件属于疑似越界，需要人工复核。未声明路径范围、需求或验收标准不足时保留“证据不足”。可加 `--ai-provider local`，通过现有 `AGENT_EVAL_MODEL` 和私有地址模型读取完整 Diff 作语义复核；MVP 不向远程模型发送源码。测试通过只说明选中用例通过，不证明没有越界；缺少 case 文件、适配器不可加载、目标版本未检出或工作区不干净时，报告会列出未执行风险。
+
+退出码：`0` 表示未发现明显问题，`1` 表示明确越界，`2` 表示需复核或证据不足。报告中的 `base` 行号对应删除前代码，`target` 行号对应新增后代码。可运行 `python -m unittest discover -s tests -p test_scope_audit.py -v`，在临时 Git 仓库复现正常与越界的完整链路；已保存样例见 [范围审计 MVP 证据](evidence/scope-audit-mvp/README.md)。
+
+### 能力边界与人工复核
+
+当前正式实现会保留明确越界、疑似越界、合理关联和证据不足四种发现。`forbidden_paths` 命中是确定性结论；普通文件超出 `allowed_paths` 仍会进入最终疑似告警，即使模型认为它是必要的跨文件修改。模型发现须引用本次 Diff 中指定文件、`base`/`target` 侧的真实变更行；无效坐标会被拒绝并在 `model_finding_trace` 中说明原因。**行号有效只证明代码发生了变化，不证明模型的范围判断或解释正确。**
+
+人工复核是该模块的决策环节：对退出码 `2`、规则与模型冲突、证据不足或测试未覆盖，审阅需求与验收标准、跨文件修改的技术必要性、原始 Diff、逐条发现及实际测试结果；分别判断修改是否超出 Scope、是否仅有回归 Risk。若规格没有定义可观察行为（例如返回列表的对象 identity），应先请需求/接口负责人补充契约，保持待裁状态。明确禁止路径不能被模型的“合理关联”判断自动撤销；退出码 `0` 和测试通过也不是范围合规证明。`audit-scope` 保存自动报告及模型发现的保留/拒绝轨迹，**不自动写入或替代人工最终裁决**。
+
+普通路径告警的语义仲裁和自动 Evidence Grounding 目前都只是仓库外的离线设计实验，尚未接入本命令。对抗实验出现过“模型描述旧侧代码，定位器却为真实新增行生成证据”的错误；因此不能把“唯一且位于变更行”直接当成可靠的语义证据。小规模改造样本的离线表现不代表生产环境准确率。判断链路及人工交接位置见[Scope Audit 架构说明](docs/scope-audit-architecture.md)。
 
 ## 通用版本演化
 
@@ -229,7 +264,7 @@ agent-eval evolve-auto `
 
 `TextArtifactWorkspace` 在 `.agent-eval/workspaces` 中保存基线快照和候选产物，保护领域项目原文件。基线可以是单个文本文件，也可以是 UTF-8 文本仓库目录。多文件候选可以通过兼容字段 `TextCandidate.files` 写入完整内容，也可以通过 `TextCandidate.operations` 执行受限的 `write`、`delete` 和 `move`；路径必须是使用 `/` 的相对文件路径。OpenAI-compatible Evolver 遇到目录基线时会直接生成同一操作协议，无需另写多文件生成适配器。框架复制当前沙箱目录后再应用变更并保存目录哈希，候选通过后进入外部发布流程。
 
-循环会原子写入 `.agent-eval/workspaces/<loop-id>/checkpoint.json`。异常、时间预算或生成调用预算中止后，可以提高预算或修复外部故障，再使用相同参数追加 `--resume`；已完成的 case 从 SQLite 读取，内容相同的已暂存候选会直接复用。普通评测运行会保存 case 身份哈希，恢复时拒绝缺失或内容改变的历史 case，只允许追加新 case；适配器、suite、source 和稳定执行配置也必须保持一致。时间预算在阶段边界检查，不会强杀正在执行的领域调用；单次调用仍由 `--timeout` 和领域适配器负责。
+循环会原子写入 `.agent-eval/workspaces/<loop-id>/checkpoint.json`。异常、时间预算或生成调用预算中止后，可以提高预算或修复外部故障，再使用相同参数追加 `--resume`；已完成的 case 从 SQLite 读取，已生成的候选及其评测进度从检查点复用。普通评测运行会保存 case 身份哈希，恢复时拒绝缺失或内容改变的历史 case，只允许追加新 case；适配器、suite、source、运行身份和稳定执行配置也必须保持一致。时间预算在阶段边界检查，不会强杀正在执行的领域调用；单次调用仍由 `--timeout` 和领域适配器负责。
 
 `--max-evolver-calls` 统计诊断器和候选生成器的调用次数。它不冒充被测 Agent 的 token 或供应商账单；业务 Agent 的模型成本应通过 Trace 自定义指标进入评测策略。
 

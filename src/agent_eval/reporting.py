@@ -272,3 +272,61 @@ def write_auto_evolution_artifacts(result: Mapping[str, Any], output_dir: Path) 
 def _write_jsonl(path: Path, rows: list[Mapping[str, Any]]) -> None:
     content = "".join(json.dumps(row, ensure_ascii=False) + "\n" for row in rows)
     path.write_text(content, encoding="utf-8")
+
+
+def write_scope_audit_artifacts(result: Mapping[str, Any], output_dir: Path, raw_diff: str = "") -> None:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    (output_dir / "diff.patch").write_text(raw_diff, encoding="utf-8", newline="\n")
+    (output_dir / "scope_audit.json").write_text(
+        json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+    )
+    report = [
+        "# AI Code Change Scope Audit", "",
+        f"- Base: `{result['base_commit']}`",
+        f"- Target: `{result['target_commit']}`",
+        f"- Conclusion: **{result['conclusion']}**", "",
+        f"- Diff: [complete patch](diff.patch), +{result['additions']} / -{result['deletions']}",
+        f"- Diff SHA-256: `{result['diff_sha256']}`",
+        f"- Allowed paths: {', '.join(result['allowed_paths']) or 'Not declared'}",
+        f"- Forbidden paths: {', '.join(result['forbidden_paths']) or 'Not declared'}", "",
+        "## Requirement", "", result["requirement"] or "Not supplied.", "",
+        "## Acceptance criteria", "",
+        *[f"- {criterion}" for criterion in result["acceptance_criteria"]], "",
+        "## Changed files", "",
+        *[f"- `{path}`" for path in result["changed_files"]], "",
+        "## Scope findings", "",
+    ]
+    for finding in result["findings"]:
+        location = f"{finding['path']}:{finding['line'] or '?'} ({finding['line_side']})"
+        evidence = finding["evidence"].replace("`", "\\`")
+        report.extend([
+            f"- `{location}` — **{finding['status']}** / {finding['risk']} / {finding['source']}: {finding['reason']}",
+            f"  - Evidence: `{evidence}`",
+        ])
+    if not result["findings"]:
+        report.append("- No changed code was available to assess.")
+    if result.get("model_finding_trace"):
+        report.extend(["", "## Model finding decisions", ""])
+        for trace in result["model_finding_trace"]:
+            raw = trace["raw"] if isinstance(trace["raw"], Mapping) else {}
+            location = f"{raw.get('path', '?')}:{raw.get('line', '?')} ({raw.get('line_side', 'target')})"
+            retained = (f"scope finding #{trace['final_finding_index']}"
+                        if trace["final_finding_index"] is not None else "no scope finding")
+            report.append(
+                f"- Model #{trace['index']} `{location}` / `{raw.get('status', '?')}`: "
+                f"{trace['validation']}, {trace['disposition']} → {retained}. {trace['reason']}"
+            )
+    report.extend(["", "## Selected regression tests", "",
+                   f"- Selection: `{result['test_selection']['mode']}` → {', '.join(result['test_selection']['suites'])}",
+                   f"- Execution: **{result['tests']['status']}**", ""])
+    for run in result["tests"]["runs"]:
+        report.append(
+            f"- `{run['suite']}`: **{run['status']}**, {run['case_count']} cases, "
+            f"{run['hard_failures']} hard failures ([details]({run['report_path']}))."
+        )
+    report.extend(["", "## Uncovered risks", ""])
+    report.extend(f"- {risk}" for risk in result["uncovered_risks"])
+    if not result["uncovered_risks"]:
+        report.append("- No additional gap identified in this run; tests do not prove absence of scope violations.")
+    report.extend(["", "Passing tests do not prove that the change stayed within the requested scope.", ""])
+    (output_dir / "report.md").write_text("\n".join(report), encoding="utf-8")

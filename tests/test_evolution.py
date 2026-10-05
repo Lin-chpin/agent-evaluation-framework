@@ -20,7 +20,7 @@ from agent_eval import (
     TraceEvent,
 )
 from agent_eval.engine import EvaluationEngine
-from agent_eval.evolution import EvolutionEngine
+from agent_eval.evolution import EvolutionEngine, summarize_metrics
 from agent_eval.reporting import write_evolution_artifacts
 from agent_eval.store import ResultStore
 
@@ -132,6 +132,18 @@ class EvolutionTest(unittest.TestCase):
                 ),
             )
         )
+
+    def test_required_metric_needs_every_case(self) -> None:
+        summary = {
+            "results": [
+                {"hard_pass": True, "soft_warning_count": 0, "trace": {"fields": {"cost_usd": 1}, "events": []}},
+                {"hard_pass": True, "soft_warning_count": 0, "trace": {"fields": {}, "events": []}},
+            ],
+            "hard_failures": 0,
+            "soft_warnings": 0,
+        }
+        objective = MetricObjective("cost", "cost_usd", direction="minimize", required=True)
+        self.assertIsNone(summarize_metrics(summary, (objective,))["objectives"]["cost"])
 
     def test_accepts_improvement_without_regression(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

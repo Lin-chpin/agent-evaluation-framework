@@ -80,6 +80,7 @@ class EvaluationEngine:
         retries: int = 0,
         timeout_seconds: float = 30,
         collect_few_shot: bool = False,
+        run_identity: str | None = None,
     ):
         self.adapter = adapter
         self.store = store
@@ -93,6 +94,7 @@ class EvaluationEngine:
         self.retries = max(0, retries)
         self.timeout_seconds = timeout_seconds
         self.collect_few_shot = collect_few_shot
+        self.run_identity = run_identity
 
     def _read_one_trace(
         self,
@@ -202,6 +204,8 @@ class EvaluationEngine:
         resume: bool = False,
     ) -> dict[str, Any]:
         case_manifest = _case_manifest(cases)
+        if resume and not self.run_identity:
+            raise ValueError("resume requires a stable run_identity for the adapter and target")
         run_id = run_id or f"{suite}-{uuid.uuid4().hex[:12]}"
         with self.store.lock_run(run_id):
             return self._run_suite_locked(
@@ -230,6 +234,7 @@ class EvaluationEngine:
                 "retries": self.retries,
                 "timeout_seconds": self.timeout_seconds,
                 "collect_few_shot": self.collect_few_shot,
+                "run_identity": self.run_identity,
             },
             resume=resume,
             case_manifest=case_manifest,
@@ -237,6 +242,9 @@ class EvaluationEngine:
         pending = [
             case for case in cases if not (resume and self.store.has_case(run_id, case.case_id))
         ]
+        batch: list[CaseResult] = []
+        # ponytail: a crash can replay up to 32 finished cases; lower the cap if recovery cost matters.
+        batch_size = min(32, self.max_in_flight)
         with ThreadPoolExecutor(max_workers=self.workers) as pool:
             remaining = iter(pending)
             futures = {
@@ -247,12 +255,36 @@ class EvaluationEngine:
             while futures:
                 completed, futures = wait(futures, return_when=FIRST_COMPLETED)
                 for future in completed:
-                    self.store.save_case(future.result())
+                    batch.append(future.result())
+                    if len(batch) >= batch_size:
+                        self.store.save_cases(batch)
+                        batch.clear()
                     case = next(remaining, None)
                     if case is not None:
                         futures.add(pool.submit(self._evaluate_case, case, run_id, source))
 
+        if batch:
+            self.store.save_cases(batch)
+
         results = self.store.list_results(run_id)
+        trace_cases: dict[str, list[str]] = {}
+        for result in results:
+            trace_id = (result.get("trace") or {}).get("trace_id")
+            if trace_id:
+                trace_cases.setdefault(trace_id, []).append(result["case"]["case_id"])
+        for trace_id, case_ids in trace_cases.items():
+            if len(case_ids) > 1:
+                for case_id in case_ids:
+                    self.store.add_case_check(
+                        run_id,
+                        case_id,
+                        CheckResult(
+                            "structure", "hard", "unique_trace_id", False,
+                            trace_id, "unique within the run",
+                        ),
+                    )
+        if any(len(case_ids) > 1 for case_ids in trace_cases.values()):
+            results = self.store.list_results(run_id)
         hard_failures = sum(1 for result in results if not result["hard_pass"])
         soft_warnings = sum(result["soft_warning_count"] for result in results)
         status = "failed" if hard_failures else "passed"

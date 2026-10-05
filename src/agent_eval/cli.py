@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import uuid
 from pathlib import Path
 from typing import Any
 
@@ -9,6 +10,7 @@ from .auto_evolution import (
     AutoEvolutionLoop,
     load_auto_evolution_adapter,
 )
+from .diff_analysis import _git, read_git_diff
 from .engine import EvaluationEngine, load_adapter, load_cases
 from .evolution import EvolutionEngine, load_candidate, load_policy
 from .llm import OpenAICompatibleReviewer
@@ -18,7 +20,9 @@ from .reporting import (
     write_auto_evolution_artifacts,
     write_evolution_artifacts,
     write_run_artifacts,
+    write_scope_audit_artifacts,
 )
+from .scope_audit import audit_scope
 from .store import ResultStore
 from .workspace import TextArtifactWorkspace
 from .test_selection import select_tests
@@ -33,6 +37,7 @@ def _add_runtime_options(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--timeout", type=float, default=30)
     parser.add_argument("--use-llm", action="store_true")
     parser.add_argument("--collect-few-shot", action="store_true")
+    parser.add_argument("--run-identity", help="stable adapter and target artifact identity, required for resume")
 
 
 def _add_engine_options(parser: argparse.ArgumentParser) -> None:
@@ -60,6 +65,21 @@ def _build_parser() -> argparse.ArgumentParser:
     select.add_argument("--ai-input", choices=("auto", "raw", "summary"), default="auto")
     select.add_argument("--confidence-threshold", type=float, default=0.7)
     select.add_argument("--output", type=Path)
+
+    audit = commands.add_parser("audit-scope", help="audit a committed AI code change against a task")
+    audit.add_argument("--repository", type=Path, required=True)
+    audit.add_argument("--base", required=True)
+    audit.add_argument("--target", required=True)
+    audit.add_argument("--spec", type=Path, required=True)
+    audit.add_argument("--ai-provider", choices=("none", "local"), default="none")
+    audit.add_argument("--adapter", type=Path)
+    for suite in ("regression", "smoke", "full"):
+        audit.add_argument(f"--{suite}", type=Path)
+    audit.add_argument("--db", type=Path)
+    audit.add_argument("--output", type=Path)
+    audit.add_argument("--workers", type=int, default=1)
+    audit.add_argument("--retries", type=int, default=0)
+    audit.add_argument("--timeout", type=float, default=30)
 
     release = commands.add_parser(
         "release", help="run targeted regression, smoke, then optional full"
@@ -158,6 +178,7 @@ def _engine_for_adapter(
         retries=args.retries,
         timeout_seconds=args.timeout,
         collect_few_shot=args.collect_few_shot,
+        run_identity=args.run_identity,
     )
 
 
@@ -203,6 +224,95 @@ def _select_tests(args: argparse.Namespace) -> int:
         args.output.write_text(content + "\n", encoding="utf-8")
     print(content)
     return 2 if selection.human_review_required else 0
+
+
+def _audit_scope(args: argparse.Namespace) -> int:
+    specification = json.loads(args.spec.read_text(encoding="utf-8"))
+    if not isinstance(specification, dict):
+        raise ValueError("audit specification must be a JSON object")
+    snapshot = read_git_diff(args.repository, args.base, args.target)
+    reviewer = _reviewer(args.ai_provider == "local")
+    selection = select_tests(
+        ai_provider=args.ai_provider, reviewer=reviewer, snapshot=snapshot,
+    )
+    result = audit_scope(snapshot, specification, reviewer)
+    result["test_selection"] = to_jsonable(selection)
+    output = args.output or Path(".agent-eval/audits") / uuid.uuid4().hex[:12]
+    missing: list[str] = []
+    runs: list[dict[str, Any]] = []
+    if not snapshot.files:
+        missing.append("The commit comparison contains no changed files.")
+    elif args.adapter is None:
+        missing.append("No ProjectAdapter was supplied; selected regression suites were not executed.")
+    else:
+        repository = args.repository.resolve()
+        if _git(repository, "rev-parse", "HEAD").strip() != snapshot.target_commit:
+            missing.append("Tests were not run because the repository HEAD is not the target commit.")
+        elif _git(repository, "status", "--porcelain").strip():
+            missing.append("Tests were not run because the target checkout has uncommitted files.")
+        else:
+            suite_paths = {suite: getattr(args, suite) for suite in selection.suites}
+            available = [(suite, path) for suite, path in suite_paths.items() if path is not None]
+            missing.extend(
+                f"Selected {suite} suite has no case file."
+                for suite, path in suite_paths.items() if path is None
+            )
+            if available:
+                try:
+                    with ResultStore(args.db or output / "evaluation.db") as store:
+                        engine = EvaluationEngine(
+                            load_adapter(args.adapter), store, workers=args.workers,
+                            retries=args.retries, timeout_seconds=args.timeout,
+                            run_identity=snapshot.target_commit,
+                        )
+                        for suite, path in available:
+                            try:
+                                summary = engine.run_suite(
+                                    load_cases(path, suite), suite,
+                                    run_id=f"scope-{uuid.uuid4().hex[:12]}-{suite}",
+                                )
+                                report_path = f"tests/{suite}/report.md"
+                                write_run_artifacts(summary, output / "tests" / suite)
+                                runs.append({
+                                    "suite": suite, "status": summary["status"],
+                                    "case_count": summary["case_count"],
+                                    "hard_failures": summary["hard_failures"],
+                                    "report_path": report_path,
+                                })
+                            except Exception as error:
+                                missing.append(f"Selected {suite} suite could not run: {type(error).__name__}: {error}")
+                except Exception as error:
+                    missing.append(f"Regression execution unavailable: {type(error).__name__}: {error}")
+    if not runs:
+        test_status = "not_run"
+    elif any(run["status"] == "failed" for run in runs):
+        test_status = "failed"
+    elif len(runs) < len(selection.suites):
+        test_status = "partial"
+    else:
+        test_status = "passed"
+    result["tests"] = {"status": test_status, "runs": runs, "selected_suites": list(selection.suites)}
+    missing.extend(result["warnings"])
+    if selection.human_review_required:
+        missing.extend(selection.review_reasons)
+    if not result["requirement"] or not result["acceptance_criteria"]:
+        missing.append("Requirement and acceptance criteria must be specific enough for scope judgment.")
+    if any(finding["line"] is None for finding in result["findings"]):
+        missing.append("Some changed files have no source line evidence (binary or metadata-only change).")
+    result["uncovered_risks"] = list(dict.fromkeys(missing))
+    findings = result["findings"]
+    if any(item["status"] == "clear_out_of_scope" and item["source"] == "rules" for item in findings):
+        result["conclusion"] = "clear_out_of_scope"
+    elif any(item["status"] in {"clear_out_of_scope", "suspected_out_of_scope"} for item in findings) or test_status == "failed":
+        result["conclusion"] = "review_required"
+    elif any(item["status"] == "insufficient_evidence" for item in findings) or result["uncovered_risks"] or test_status != "passed":
+        result["conclusion"] = "insufficient_evidence"
+    else:
+        result["conclusion"] = "no_obvious_issue"
+    write_scope_audit_artifacts(result, output, snapshot.raw_diff)
+    print(json.dumps({"conclusion": result["conclusion"], "tests": test_status}, ensure_ascii=False))
+    print(f"report: {output / 'report.md'}")
+    return 0 if result["conclusion"] == "no_obvious_issue" else (1 if result["conclusion"] == "clear_out_of_scope" else 2)
 
 
 def _release(args: argparse.Namespace) -> int:
@@ -398,6 +508,8 @@ def main(argv: list[str] | None = None) -> int:
         return _run(args)
     if args.command == "select-tests":
         return _select_tests(args)
+    if args.command == "audit-scope":
+        return _audit_scope(args)
     if args.command == "release":
         return _release(args)
     if args.command == "evolve":

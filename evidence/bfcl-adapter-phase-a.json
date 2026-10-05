@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "benchmark": "BFCL",
+  "phase": "A",
+  "mode": "zero-cost adapter validation",
+  "checks": [
+    "JSONL question/answer contract",
+    "tool-call normalization",
+    "correct call acceptance",
+    "missing call rejection",
+    "wrong parameter rejection",
+    "extra call rejection",
+    "NormalizedTrace conversion"
+  ],
+  "claim_status": "not_claimable",
+  "limitations": [
+    "No model or BFCL dataset cases were executed.",
+    "This is not an official BFCL score."
+  ]
+}

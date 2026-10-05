@@ -20,6 +20,7 @@ from .model import (
     ProjectAdapter,
     RetryableEvolverError,
     TextCandidate,
+    TextFileOperation,
     to_jsonable,
 )
 from .store import ResultStore
@@ -80,6 +81,12 @@ def _dataset_manifest(datasets: Mapping[str, Sequence[EvalCase]]) -> dict[str, A
     return manifest
 
 
+def _artifact_sha256(path: Path) -> str:
+    return hashlib.sha256(
+        json.dumps(read_artifact(path), ensure_ascii=False, sort_keys=True).encode("utf-8")
+    ).hexdigest()
+
+
 class AutoEvolutionLoop:
     def __init__(
         self,
@@ -97,13 +104,14 @@ class AutoEvolutionLoop:
         self.retries = retries
         self.timeout_seconds = timeout_seconds
 
-    def _engine(self, adapter: ProjectAdapter) -> EvaluationEngine:
+    def _engine(self, adapter: ProjectAdapter, artifact: Path) -> EvaluationEngine:
         return EvaluationEngine(
             adapter,
             self.store,
             workers=self.workers,
             retries=self.retries,
             timeout_seconds=self.timeout_seconds,
+            run_identity=_artifact_sha256(artifact),
         )
 
     @staticmethod
@@ -174,13 +182,18 @@ class AutoEvolutionLoop:
                 raise ValueError("checkpoint target does not match auto evolution adapter")
             if checkpoint.get("datasets") not in (None, dataset_manifest):
                 raise ValueError("checkpoint datasets do not match the current frozen datasets")
-            if checkpoint.get("status") == "completed":
-                return checkpoint
+            if checkpoint.get("policy") != to_jsonable(self.policy):
+                raise ValueError("checkpoint policy does not match the current frozen policy")
             current_path = Path(checkpoint["current_artifact"])
             if not current_path.exists():
                 raise FileNotFoundError(f"checkpoint artifact does not exist: {current_path}")
+            if checkpoint.get("current_artifact_sha256") != _artifact_sha256(current_path):
+                raise ValueError("checkpoint artifact content changed")
+            if checkpoint.get("status") == "completed":
+                return checkpoint
             current_version = str(checkpoint["current_version"])
             rounds = list(checkpoint.get("rounds", []))
+            pending_round = checkpoint.get("pending_round")
             usage = checkpoint.get("usage", {})
             previous_elapsed = float(usage.get("elapsed_seconds", 0))
             evolver_calls = int(usage.get("evolver_calls", 0))
@@ -189,6 +202,7 @@ class AutoEvolutionLoop:
             current_path = self.workspace.snapshot(loop_id, adapter.baseline_artifact)
             current_version = adapter.baseline_version
             rounds: list[dict[str, Any]] = []
+            pending_round = None
 
         phase = "initialization"
 
@@ -204,7 +218,9 @@ class AutoEvolutionLoop:
                 "initial_version": adapter.baseline_version,
                 "current_version": current_version,
                 "current_artifact": str(current_path),
+                "current_artifact_sha256": _artifact_sha256(current_path),
                 "datasets": dataset_manifest,
+                "policy": to_jsonable(self.policy),
                 "budget": to_jsonable(budget),
                 "usage": {
                     "elapsed_seconds": round(elapsed_seconds(), 3),
@@ -216,6 +232,8 @@ class AutoEvolutionLoop:
             if error is not None:
                 result["failed_phase"] = phase
                 result["error"] = error
+            if pending_round is not None:
+                result["pending_round"] = pending_round
             return result
 
         def save(status: str, error: str | None = None) -> dict[str, Any]:
@@ -256,73 +274,103 @@ class AutoEvolutionLoop:
             for round_number in range(len(rounds) + 1, budget.max_rounds + 1):
                 if time_exhausted():
                     return save("time_budget_exhausted")
-                if rounds and evolver_exhausted():
+                if rounds and pending_round is None and evolver_exhausted():
                     return save("evolver_call_budget_exhausted")
 
                 phase = "baseline_evaluation"
+                evaluation_path = Path(pending_round["baseline_artifact"]) if pending_round else current_path
+                evaluation_version = pending_round["baseline_version"] if pending_round else current_version
                 baseline_engine = self._engine(
-                    adapter.build_adapter(current_path, current_version)
+                    adapter.build_adapter(evaluation_path, evaluation_version), evaluation_path
                 )
-                diagnosis_run = baseline_engine.run_suite(
-                    datasets["improvement"],
-                    "improvement",
-                    run_id=f"{loop_id}-round-{round_number}-diagnosis",
-                    resume=resume,
-                )
-                if not diagnosis_run["hard_failures"] and not diagnosis_run["soft_warnings"]:
-                    return save("completed")
-                if time_exhausted():
-                    return save("time_budget_exhausted")
-                if evolver_exhausted():
-                    return save("evolver_call_budget_exhausted")
-
-                phase = "diagnosis"
-                diagnosis = invoke_evolver(lambda: adapter.diagnose(diagnosis_run))
-                self._validate_diagnosis(diagnosis, adapter)
-                if time_exhausted():
-                    return save("time_budget_exhausted")
-                if evolver_exhausted():
-                    return save("evolver_call_budget_exhausted")
-
-                phase = "candidate_generation"
-                proposals = list(
-                    invoke_evolver(
-                        lambda: adapter.generate_candidates(
-                            diagnosis,
-                            read_artifact(current_path),
-                            round_number,
-                        )
+                if pending_round is None:
+                    diagnosis_run = baseline_engine.run_suite(
+                        datasets["improvement"],
+                        "improvement",
+                        run_id=f"{loop_id}-round-{round_number}-diagnosis",
+                        resume=resume,
                     )
-                )[: budget.max_candidates_per_round]
-                if not proposals:
-                    rounds.append(
-                        {
-                            "round": round_number,
-                            "diagnosis": to_jsonable(diagnosis),
-                            "diagnosis_run": diagnosis_run,
-                            "candidates": [],
-                        }
-                    )
-                    return save("no_candidates")
-
-                candidate_results: list[dict[str, Any]] = []
-                accepted = False
-                for candidate in proposals:
+                    if not diagnosis_run["hard_failures"] and not diagnosis_run["soft_warnings"]:
+                        return save("completed")
                     if time_exhausted():
                         return save("time_budget_exhausted")
-                    self._validate_candidate(candidate, current_version)
+                    if evolver_exhausted():
+                        return save("evolver_call_budget_exhausted")
+
+                    phase = "diagnosis"
+                    diagnosis = invoke_evolver(lambda: adapter.diagnose(diagnosis_run))
+                    self._validate_diagnosis(diagnosis, adapter)
+                    if time_exhausted():
+                        return save("time_budget_exhausted")
+                    if evolver_exhausted():
+                        return save("evolver_call_budget_exhausted")
+
+                    phase = "candidate_generation"
+                    proposals = list(
+                        invoke_evolver(
+                            lambda: adapter.generate_candidates(
+                                diagnosis,
+                                read_artifact(evaluation_path),
+                                round_number,
+                            )
+                        )
+                    )[: budget.max_candidates_per_round]
+                    if not proposals:
+                        rounds.append(
+                            {
+                                "round": round_number,
+                                "diagnosis": to_jsonable(diagnosis),
+                                "diagnosis_run": diagnosis_run,
+                                "candidates": [],
+                            }
+                        )
+                        return save("no_candidates")
+                    pending_round = {
+                        "round": round_number,
+                        "baseline_artifact": str(evaluation_path),
+                        "baseline_version": evaluation_version,
+                        "diagnosis": to_jsonable(diagnosis),
+                        "diagnosis_run": diagnosis_run,
+                        "proposals": [to_jsonable(candidate) for candidate in proposals],
+                        "candidates": [],
+                    }
+                    save("running")
+                else:
+                    if pending_round["round"] != round_number:
+                        raise ValueError("checkpoint pending round does not match the next round")
+                    diagnosis_run = pending_round["diagnosis_run"]
+                    diagnosis = EvolutionDiagnosis(**pending_round["diagnosis"])
+                    proposals = [
+                        TextCandidate(
+                            **{
+                                **value,
+                                "operations": tuple(
+                                    TextFileOperation(**operation)
+                                    for operation in value.get("operations", [])
+                                ),
+                            }
+                        )
+                        for value in pending_round["proposals"]
+                    ]
+
+                candidate_results = pending_round["candidates"]
+                accepted = bool(candidate_results and candidate_results[-1]["evaluation"]["decision"] == "accept")
+                for candidate in proposals[len(candidate_results):] if not accepted else ():
+                    if time_exhausted():
+                        return save("time_budget_exhausted")
+                    self._validate_candidate(candidate, evaluation_version)
                     candidate_path = self.workspace.stage(
                         loop_id,
                         round_number,
                         candidate,
                         adapter.baseline_artifact.name,
-                        current_path,
+                        evaluation_path,
                     )
                     change = EvolutionCandidate(
                         candidate.candidate_id,
                         adapter.target_type,
                         adapter.target_id,
-                        current_version,
+                        evaluation_version,
                         candidate.candidate_version,
                         candidate.change_type,
                         artifact_ref=str(candidate_path),
@@ -333,7 +381,7 @@ class AutoEvolutionLoop:
                     result = EvolutionEngine(
                         baseline_engine,
                         self._engine(
-                            adapter.build_adapter(candidate_path, candidate.candidate_version)
+                            adapter.build_adapter(candidate_path, candidate.candidate_version), candidate_path
                         ),
                         self.policy,
                     ).run(
@@ -356,6 +404,8 @@ class AutoEvolutionLoop:
                         current_path = candidate_path
                         current_version = candidate.candidate_version
                         accepted = True
+                    save("running")
+                    if accepted:
                         break
 
                 rounds.append(
@@ -366,6 +416,7 @@ class AutoEvolutionLoop:
                         "candidates": candidate_results,
                     }
                 )
+                pending_round = None
                 save("running")
                 if not accepted:
                     return save("no_acceptable_candidate")

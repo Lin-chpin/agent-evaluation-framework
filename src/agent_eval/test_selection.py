@@ -63,6 +63,7 @@ def select_tests(
     ai_input: str = "auto",
     reviewer: JsonReviewer | None = None,
     confidence_threshold: float = 0.7,
+    snapshot: DiffSnapshot | None = None,
 ) -> TestSelection:
     if ai_provider not in {"none", "local", "remote"}:
         raise ValueError("ai_provider must be none, local, or remote")
@@ -71,7 +72,7 @@ def select_tests(
     if not 0 <= confidence_threshold <= 1:
         raise ValueError("confidence_threshold must be between 0 and 1")
 
-    snapshot = read_git_diff(repository, base)
+    snapshot = snapshot if snapshot is not None else read_git_diff(repository, base)
     rules = assess_rules(snapshot)
     ai = None
     review_reasons: list[str] = []

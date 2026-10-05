@@ -6,6 +6,7 @@ import signal
 import subprocess
 import tempfile
 import threading
+import time
 from pathlib import Path
 from typing import Mapping, Sequence
 
@@ -30,8 +31,6 @@ def _decode_output(output: bytearray, truncated: bool, encoding: str) -> str:
 
 def _terminate_process_tree(process: subprocess.Popen) -> None:
     # Agent commands may spawn servers or tools; killing only the parent would leak them into later evaluations.
-    if process.poll() is not None:
-        return
     if os.name == "nt":
         subprocess.run(
             ["taskkill", "/PID", str(process.pid), "/T", "/F"],
@@ -47,6 +46,27 @@ def _terminate_process_tree(process: subprocess.Popen) -> None:
             os.killpg(process.pid, signal.SIGKILL)
         except ProcessLookupError:
             pass
+
+
+def _windows_job(process: subprocess.Popen):
+    if os.name != "nt":
+        return None
+    import ctypes
+
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    kernel32.CreateJobObjectW.argtypes = (ctypes.c_void_p, ctypes.c_wchar_p)
+    kernel32.CreateJobObjectW.restype = ctypes.c_void_p
+    kernel32.AssignProcessToJobObject.argtypes = (ctypes.c_void_p, ctypes.c_void_p)
+    kernel32.AssignProcessToJobObject.restype = ctypes.c_int
+    kernel32.TerminateJobObject.argtypes = (ctypes.c_void_p, ctypes.c_uint)
+    kernel32.CloseHandle.argtypes = (ctypes.c_void_p,)
+    job = kernel32.CreateJobObjectW(None, None)
+    if not job:
+        return None
+    if not kernel32.AssignProcessToJobObject(job, process._handle):
+        kernel32.CloseHandle(job)
+        return None
+    return kernel32, job
 
 
 def run_agent_process(
@@ -79,6 +99,7 @@ def run_agent_process(
             stdin_file.write(input_text.encode(encoding))
             stdin_file.seek(0)
         # Keep shell parsing out of the trust boundary; adapters must provide an explicit argument list.
+        deadline = time.monotonic() + timeout_seconds
         process = subprocess.Popen(
             list(command),
             cwd=cwd,
@@ -89,6 +110,7 @@ def run_agent_process(
             start_new_session=start_new_session,
             creationflags=creation_flags,
         )
+        job = _windows_job(process)
         outputs = {"stdout": bytearray(), "stderr": bytearray()}
         truncated = {"stdout": False, "stderr": False}
         state: dict[str, str | None] = {"reason": None, "stream": None}
@@ -99,7 +121,8 @@ def run_agent_process(
                 if state["reason"] is not None:
                     return
                 state.update(reason=reason, stream=stream_name)
-            _terminate_process_tree(process)
+            if job is None or not job[0].TerminateJobObject(job[1], 1):
+                _terminate_process_tree(process)
 
         def capture(stream_name: str) -> None:
             stream = getattr(process, stream_name)
@@ -119,29 +142,28 @@ def run_agent_process(
             threading.Thread(target=capture, args=(name,), daemon=True)
             for name in ("stdout", "stderr")
         ]
-        for reader in readers:
-            reader.start()
         try:
-            process.wait(timeout=timeout_seconds)
-        except subprocess.TimeoutExpired as error:
-            stop("timeout")
-            process.wait()
             for reader in readers:
-                reader.join()
+                reader.start()
+            try:
+                process.wait(timeout=max(0, deadline - time.monotonic()))
+            except subprocess.TimeoutExpired:
+                stop("timeout")
+                try:
+                    process.wait(timeout=0.25)
+                except subprocess.TimeoutExpired:
+                    pass
+            for reader in readers:
+                reader.join(timeout=max(0, deadline - time.monotonic()) + 0.25)
+            if any(reader.is_alive() for reader in readers):
+                stop("timeout")
             stdout = _decode_output(outputs["stdout"], truncated["stdout"], encoding)
             stderr = _decode_output(outputs["stderr"], truncated["stderr"], encoding)
             if state["reason"] == "output_limit":
-                raise OutputLimitExceeded(command, str(state["stream"]), stdout, stderr) from error
-            raise subprocess.TimeoutExpired(
-                command,
-                timeout_seconds,
-                output=stdout,
-                stderr=stderr,
-            ) from error
-        for reader in readers:
-            reader.join()
-        stdout = _decode_output(outputs["stdout"], truncated["stdout"], encoding)
-        stderr = _decode_output(outputs["stderr"], truncated["stderr"], encoding)
-        if state["reason"] == "output_limit":
-            raise OutputLimitExceeded(command, str(state["stream"]), stdout, stderr)
-        return subprocess.CompletedProcess(command, process.returncode, stdout, stderr)
+                raise OutputLimitExceeded(command, str(state["stream"]), stdout, stderr)
+            if state["reason"] == "timeout":
+                raise subprocess.TimeoutExpired(command, timeout_seconds, output=stdout, stderr=stderr)
+            return subprocess.CompletedProcess(command, process.returncode, stdout, stderr)
+        finally:
+            if job is not None:
+                job[0].CloseHandle(job[1])

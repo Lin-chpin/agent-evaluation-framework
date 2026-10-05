@@ -1,0 +1,62 @@
+{
+  "recorded_at": "2026-10-04T13:55:43.960949+00:00",
+  "framework_commit": "0b80d1d9f05ae41663553a5da6c16d67f7fd6e7d",
+  "framework_dirty": true,
+  "python": "3.13.5",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "source_sha256": {
+    "src/agent_eval/scope_audit.py": "935057efa34fbe091342a74362173c3063e616c5e22ee281c023a0b2f4521639",
+    "src/agent_eval/cli.py": "d7c9e9d33375fb286cc46f781f4a08701189c5eb2fe4bf28fb0644e6ad22401e",
+    "src/agent_eval/diff_analysis.py": "941e1208b92e410f41fe1e0e67185c8624fe926145708fded5dfdada4b739ea9",
+    "src/agent_eval/test_selection.py": "53350aeb685faaa429dab28f1c7377daf316811058449fbc7389046046ac9da0",
+    "src/agent_eval/reporting.py": "daea15b98930a5f136bd5a384dbb30bd99ed4c5a6ea89bea44df4e33980048cc",
+    "tests/test_scope_audit.py": "860199f22ee76a6299827e7c3207026663e08264671c4aa1e597202cde5818b0"
+  },
+  "sample_kind": "synthetic temporary repositories",
+  "ai_provider": "none",
+  "probabilistic_model_evaluation": "not_run: AGENT_EVAL_MODEL is not configured",
+  "samples": [
+    {
+      "name": "normal",
+      "exit_code": 0,
+      "conclusion": "no_obvious_issue",
+      "test_status": "passed",
+      "selected_suites": [
+        "regression",
+        "smoke"
+      ],
+      "executed_cases": 2,
+      "hard_failures": 0,
+      "report": "normal/report.md",
+      "audit_sha256": "101c805d8ec065d7ba42ed3dc326d19de486b7e52f671fd97f96a7864c81790c",
+      "diff_sha256": "f5b1ab57c6d88aeda0d35a819c03f8a5e2b80f79a5a953457747c0b2f77d6505"
+    },
+    {
+      "name": "forbidden",
+      "exit_code": 1,
+      "conclusion": "clear_out_of_scope",
+      "test_status": "passed",
+      "selected_suites": [
+        "regression",
+        "smoke"
+      ],
+      "executed_cases": 2,
+      "hard_failures": 0,
+      "report": "forbidden/report.md",
+      "audit_sha256": "6c87fb3523e58d92c3ea4873dab5897f5fe32e445e3f1a702a40a0f53fa4d81b",
+      "diff_sha256": "10ec8b59efd804479e7d05fd20f172b33e7930ed961fe292e4b6ce363dd3fb60"
+    }
+  ],
+  "verification": {
+    "full_suite": {
+      "passed": 68,
+      "failed": 0,
+      "log": "unit-tests.txt",
+      "log_sha256": "90716b99e471690502c29f2f8ab6efacd08bdd8f4e90676f1c8aee3d9a0e4dd8"
+    },
+    "scope_audit_tests": 8,
+    "diff_check": "passed",
+    "cli_help": "passed with source PYTHONPATH",
+    "model_probability_evaluation": "not_run"
+  }
+}

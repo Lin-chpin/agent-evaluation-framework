@@ -126,6 +126,10 @@ class AutoEvolutionTest(unittest.TestCase):
                 )
                 with self.assertRaisesRegex(ValueError, "frozen datasets"):
                     loop.run(adapter, changed, loop_id="frozen", resume=True)
+                with self.assertRaisesRegex(ValueError, "frozen policy"):
+                    AutoEvolutionLoop(
+                        store, workspace, EvolutionPolicy(require_holdout_pass=True)
+                    ).run(adapter, datasets, loop_id="frozen", resume=True)
 
     def test_continues_after_partial_acceptance_until_improvement_is_complete(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -355,6 +359,7 @@ class AutoEvolutionTest(unittest.TestCase):
             baseline = root / "router.skill"
             baseline.write_text("billing", encoding="utf-8")
             fail_candidate_once = True
+            generate_calls = 0
 
             def diagnose(_: dict) -> EvolutionDiagnosis:
                 return EvolutionDiagnosis("missing password routing", "skill", "router")
@@ -362,7 +367,9 @@ class AutoEvolutionTest(unittest.TestCase):
             def generate(
                 _: EvolutionDiagnosis, current: str, __: int
             ) -> tuple[TextCandidate, ...]:
-                return (TextCandidate("good", "2", current + ",password", "extend"),)
+                nonlocal generate_calls
+                generate_calls += 1
+                return (TextCandidate(f"good-{generate_calls}", "2", current + ",password", "extend"),)
 
             def flaky_builder(artifact: Path, version: str) -> ProjectAdapter:
                 nonlocal fail_candidate_once
@@ -402,7 +409,9 @@ class AutoEvolutionTest(unittest.TestCase):
             self.assertEqual(failed["failed_phase"], "candidate_evaluation")
             self.assertEqual(resumed["status"], "completed")
             self.assertEqual(resumed["current_version"], "2")
-            self.assertEqual(resumed["usage"]["evolver_calls"], 4)
+            self.assertEqual(resumed["usage"]["evolver_calls"], 2)
+            self.assertEqual(generate_calls, 1)
+            self.assertEqual(resumed["rounds"][0]["candidates"][0]["candidate"]["candidate_id"], "good-1")
 
 
 if __name__ == "__main__":

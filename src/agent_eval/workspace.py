@@ -81,23 +81,35 @@ class TextArtifactWorkspace:
     ) -> Path:
         candidate_id = safe_name(candidate.candidate_id, "candidate_id")
         target = self.root / loop_id / "candidates" / f"round-{round_number}" / candidate_id / name
-        if candidate.operations:
-            if candidate.files:
+        if candidate.operations or candidate.files:
+            if candidate.operations and candidate.files:
                 raise ValueError("candidate must use files or operations, not both")
+            directory_error = (
+                "file operations require a directory artifact"
+                if candidate.operations else "multi-file candidate requires a directory artifact"
+            )
             if current_artifact is None or not current_artifact.is_dir():
-                raise ValueError("file operations require a directory artifact")
+                raise ValueError(directory_error)
             current = read_artifact(current_artifact)
             if not isinstance(current, dict):
-                raise ValueError("file operations require a directory artifact")
-            validated = validate_text_file_operations(current, candidate.operations)
+                raise ValueError(directory_error)
+            if candidate.operations:
+                manifest_content = {"operations": to_jsonable(candidate.operations)}
+                operations = candidate.operations
+            else:
+                manifest_content = {"files": dict(candidate.files)}
+                operations = tuple(
+                    TextFileOperation("write", relative, content)
+                    for relative, content in candidate.files.items()
+                )
+            validated = validate_text_file_operations(current, operations)
             manifest_path = target.parent / "artifact-manifest.json"
-            expected_operations = to_jsonable(candidate.operations)
             if target.exists():
                 if not manifest_path.is_file():
                     raise ValueError(f"candidate directory exists without manifest: {target}")
                 manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
                 if (
-                    manifest.get("operations") != expected_operations
+                    any(manifest.get(key) != value for key, value in manifest_content.items())
                     or manifest.get("tree_sha256") != _tree_sha256(target)
                 ):
                     raise ValueError(f"candidate artifact already exists with different content: {target}")
@@ -107,41 +119,7 @@ class TextArtifactWorkspace:
             apply_text_file_operations(target, validated)
             manifest_path.write_text(
                 json.dumps(
-                    {"operations": expected_operations, "tree_sha256": _tree_sha256(target)},
-                    ensure_ascii=False,
-                    indent=2,
-                ),
-                encoding="utf-8",
-            )
-            return target
-        if candidate.files:
-            if current_artifact is None or not current_artifact.is_dir():
-                raise ValueError("multi-file candidate requires a directory artifact")
-            manifest_path = target.parent / "artifact-manifest.json"
-            expected_files = dict(candidate.files)
-            current = read_artifact(current_artifact)
-            if not isinstance(current, dict):
-                raise ValueError("multi-file candidate requires a directory artifact")
-            validated = validate_text_file_operations(
-                current,
-                tuple(
-                    TextFileOperation("write", relative, content)
-                    for relative, content in expected_files.items()
-                ),
-            )
-            if target.exists():
-                if not manifest_path.is_file():
-                    raise ValueError(f"candidate directory exists without manifest: {target}")
-                manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-                if manifest.get("files") != expected_files or manifest.get("tree_sha256") != _tree_sha256(target):
-                    raise ValueError(f"candidate artifact already exists with different content: {target}")
-                return target
-            target.parent.mkdir(parents=True)
-            shutil.copytree(current_artifact, target)
-            apply_text_file_operations(target, validated)
-            manifest_path.write_text(
-                json.dumps(
-                    {"files": expected_files, "tree_sha256": _tree_sha256(target)},
+                    {**manifest_content, "tree_sha256": _tree_sha256(target)},
                     ensure_ascii=False,
                     indent=2,
                 ),

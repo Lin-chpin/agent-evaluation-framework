@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import sys
 import tempfile
 import unittest
@@ -51,6 +52,32 @@ def build_adapter(artifact: Path, version: str) -> ProjectAdapter:
 
 
 class MultiFileEvolutionTest(unittest.TestCase):
+    def test_directory_candidates_copy_and_verify_their_manifests(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            baseline = root / "repository"
+            baseline.mkdir()
+            (baseline / "kept.txt").write_text("keep", encoding="utf-8")
+            workspace = TextArtifactWorkspace(root / "workspaces")
+            current = workspace.snapshot("manifest", baseline)
+            candidates = (
+                (TextCandidate("files", "2", "", "", files={"new.txt": "new"}), "files"),
+                (TextCandidate("operations", "2", "", "", operations=(
+                    TextFileOperation("write", "new.txt", "new"),
+                )), "operations"),
+            )
+            for candidate, manifest_key in candidates:
+                with self.subTest(manifest_key=manifest_key):
+                    target = workspace.stage("manifest", 1, candidate, baseline.name, current)
+                    self.assertEqual((target / "kept.txt").read_text(encoding="utf-8"), "keep")
+                    self.assertEqual((target / "new.txt").read_text(encoding="utf-8"), "new")
+                    manifest = json.loads((target.parent / "artifact-manifest.json").read_text(encoding="utf-8"))
+                    self.assertIn(manifest_key, manifest)
+                    self.assertEqual(workspace.stage("manifest", 1, candidate, baseline.name, current), target)
+                    (target / "new.txt").write_text("tampered", encoding="utf-8")
+                    with self.assertRaisesRegex(ValueError, "different content"):
+                        workspace.stage("manifest", 1, candidate, baseline.name, current)
+
     def test_rolls_back_bad_directory_candidate_and_accepts_safe_candidate(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import math
 import uuid
 from pathlib import Path
 from typing import Any, Mapping, Sequence
@@ -90,8 +91,10 @@ def _objective_value(summary: Mapping[str, Any], objective: MetricObjective) -> 
         value = builtins.get(objective.metric)
         if value is None:
             value = read_path(result, objective.metric)
-        if isinstance(value, (int, float)) and not isinstance(value, bool):
+        if isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value):
             values.append(float(value))
+    if len(values) != len(summary["results"]):
+        return None
     return _aggregate(values, objective.aggregation)
 
 

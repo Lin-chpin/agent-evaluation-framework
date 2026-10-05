@@ -146,7 +146,7 @@ agent-eval release `
   --full path/to/full.jsonl
 ```
 
-Each result is written to SQLite immediately. Reusing the same `--run-id` with `--resume` skips completed cases.
+Results are committed to SQLite in bounded batches of at most 32; an uncommitted batch is rerun after an interrupted run. For resumable runs, provide the same `--run-id` and `--run-identity` (a stable identity for the adapter and target artifact) on both the initial run and the resumed run, then add `--resume` to the latter. A changed identity blocks reuse.
 
 ## Select test suites from a Git diff
 
@@ -170,6 +170,30 @@ agent-eval select-tests --repository path/to/domain-project --ai-provider remote
 ```
 
 Local mode accepts only loopback, private-IP, or `.local` endpoints and sends the complete diff by default; add `--ai-input summary` for a stricter local option. Remote mode rejects `--ai-input raw`. Its summary contains only file counts, extensions, changed-line counts, file categories, and generic impact signals—never source text, file paths, URLs, or concrete values. See [automatic test selection](docs/test-selection.en.md) for the full boundary.
+
+## AI code change scope audit
+
+`audit-scope` compares two commits, reuses Diff impact rules to select suites, and runs available cases with the existing `ProjectAdapter` and evaluation engine. Check out the target commit with a clean working tree, and ensure the adapter evaluates that version. The audit never changes or rolls back the target code. Artifacts include `scope_audit.json`, `report.md`, the complete `diff.patch`, and existing suite reports. Exit codes are 0 (no obvious issue), 1 (explicit violation), and 2 (review needed or insufficient evidence). Deleted lines use base-version locations; added lines use target-version locations. [Saved MVP evidence](evidence/scope-audit-mvp/README.md).
+
+Provide a JSON task specification with `requirement`, `acceptance_criteria` (string array), and optional `allowed_paths` / `forbidden_paths` (path glob arrays). Run:
+
+```powershell
+agent-eval audit-scope `
+  --repository path/to/target-repo --base BASE_COMMIT --target TARGET_COMMIT `
+  --spec path/to/task.json --adapter path/to/adapter.py `
+  --regression path/to/regression.jsonl --smoke path/to/smoke.jsonl `
+  --full path/to/full.jsonl --output path/to/audit-output
+```
+
+The output includes `scope_audit.json`, `report.md`, and the existing run reports for executed suites. Explicitly forbidden paths are clear scope violations; paths outside the allowed set and unrequested public symbols are review candidates. Missing task evidence stays inconclusive. Optional `--ai-provider local` uses the existing JSON reviewer at a private endpoint for semantic review; the MVP never sends source code to a remote model. Passing tests do not prove scope compliance. Missing cases or a checkout that is not the clean target commit are reported as untested risks.
+
+### Capability limits and human review
+
+The current implementation retains four finding states: clear violation, suspected violation, related change, and insufficient evidence. A `forbidden_paths` match is deterministic. An ordinary change outside `allowed_paths` remains a suspected finding in the final report even when the model calls it a necessary cross-file change. Model findings must cite a real changed line in the stated file and `base`/`target` side; rejected coordinates and reasons are recorded in `model_finding_trace`. **A valid changed-line coordinate does not establish that the model's scope judgment or explanation is correct.**
+
+Human review is part of the decision process. For exit code `2`, rule/model conflicts, insufficient evidence, or missing test coverage, examine the task and acceptance criteria, the technical need for cross-file changes, the original Diff, each finding, and the actual test results. Decide Scope separately from regression Risk. If the specification does not define an observable behavior, such as the identity of a returned list object, ask the task or interface owner to clarify the contract and keep the case unresolved. A model's `related` finding cannot automatically override an explicitly forbidden path; exit code `0` and passing tests do not prove scope compliance. `audit-scope` preserves the automated report and the retention/rejection trace of model findings; it **does not record or replace the final human decision**.
+
+Semantic arbitration of ordinary path alerts and automatic Evidence Grounding remain isolated offline design experiments outside this command. An adversarial case mapped a model's old-side description to a real added line, so uniqueness and changed-line validity alone do not establish semantic evidence. Results on small adapted samples are not production accuracy estimates. See the [Scope Audit architecture note (Chinese)](docs/scope-audit-architecture.md) for the decision flow and handoff.
 
 ## General version evolution
 
@@ -227,7 +251,7 @@ agent-eval evolve-auto `
 
 `TextArtifactWorkspace` stores baseline snapshots and candidate artifacts under `.agent-eval/workspaces`, protecting domain-project files. A baseline may be one text file or a directory of UTF-8 text files. Multi-file candidates may keep using the compatible `TextCandidate.files` complete-content mapping, or use `TextCandidate.operations` with bounded `write`, `delete`, and `move` operations. Paths must be forward-slash relative file paths. For a directory baseline, the OpenAI-compatible Evolver emits the same operation protocol without a custom multi-file generator. The framework copies the isolated directory, applies the operations, and records a directory hash. Accepted candidates then move to the external release process.
 
-The loop atomically writes `.agent-eval/workspaces/<loop-id>/checkpoint.json`. After an exception or budget stop, fix the external failure or raise the budget and reuse the same parameters with `--resume`. Completed cases are loaded from SQLite, and identical staged candidates are reused. Ordinary evaluation runs persist case identity hashes; resume rejects removed or changed historical cases and permits only append-only additions. The adapter, suite, source, and stable execution configuration must also match. The elapsed-time budget is checked between stages and does not kill a domain call already in progress. `--timeout` and the domain adapter still control individual calls.
+The loop atomically writes `.agent-eval/workspaces/<loop-id>/checkpoint.json`. After an exception or budget stop, fix the external failure or raise the budget and reuse the same parameters with `--resume`. Completed cases are loaded from SQLite; generated candidates and their evaluation progress are reused from the checkpoint. Ordinary evaluation runs persist case identity hashes; resume rejects removed or changed historical cases and permits only append-only additions. The adapter, suite, source, run identity, and stable execution configuration must also match. The elapsed-time budget is checked between stages and does not kill a domain call already in progress. `--timeout` and the domain adapter still control individual calls.
 
 `--max-evolver-calls` counts diagnoser and candidate-generator calls. It is not a proxy for tested-Agent tokens or vendor cost. Domain Agent cost should enter the evaluation policy through custom trace metrics.
 

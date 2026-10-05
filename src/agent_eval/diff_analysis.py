@@ -18,6 +18,8 @@ class DiffSnapshot:
     categories: dict[str, int]
     extensions: dict[str, int]
     signals: tuple[str, ...]
+    base_commit: str | None = None
+    target_commit: str | None = None
 
     def sanitized_summary(self) -> str:
         return json.dumps(
@@ -56,7 +58,7 @@ def _category(path: str) -> str:
         return "ui"
     if any(part in value for part in ("report", "render", "markdown", "html")):
         return "reporting"
-    if any(part in value for part in ("test", "case", "fixture", "gold")):
+    if value.startswith(("tests/", "test/", "fixtures/")):
         return "tests"
     if any(part in value for part in ("prompt", "planner", "safety", "security", "guardrail")):
         return "control_logic"
@@ -67,13 +69,27 @@ def _category(path: str) -> str:
     return "source"
 
 
-def read_git_diff(repository: Path | str = ".", base: str = "HEAD") -> DiffSnapshot:
+def read_git_diff(
+    repository: Path | str = ".", base: str = "HEAD", target: str | None = None
+) -> DiffSnapshot:
     repository = Path(repository).resolve()
-    raw_diff = _git(repository, "diff", "--no-ext-diff", "--unified=1", base)
-    numstat = _git(repository, "diff", "--numstat", base)
-    untracked = tuple(
-        line for line in _git(repository, "ls-files", "--others", "--exclude-standard").splitlines() if line
-    )
+    if target is not None:
+        if base.startswith("-") or target.startswith("-"):
+            raise ValueError("commit references must not be command options")
+        base_commit = _git(repository, "rev-parse", "--verify", f"{base}^{{commit}}").strip()
+        target_commit = _git(repository, "rev-parse", "--verify", f"{target}^{{commit}}").strip()
+        revisions = (base_commit, target_commit)
+        diff_options = ("--no-renames",)
+        untracked = ()
+    else:
+        base_commit = target_commit = None
+        revisions = (base,)
+        diff_options = ()
+        untracked = tuple(
+            line for line in _git(repository, "ls-files", "--others", "--exclude-standard").splitlines() if line
+        )
+    raw_diff = _git(repository, "-c", "core.quotepath=false", "diff", "--no-ext-diff", "--unified=1", *diff_options, *revisions, "--")
+    numstat = _git(repository, "-c", "core.quotepath=false", "diff", "--numstat", *diff_options, *revisions, "--")
 
     files: list[str] = []
     additions = deletions = 0
@@ -117,6 +133,8 @@ def read_git_diff(repository: Path | str = ".", base: str = "HEAD") -> DiffSnaps
         categories=categories,
         extensions=extensions,
         signals=signals,
+        base_commit=base_commit,
+        target_commit=target_commit,
     )
 
 

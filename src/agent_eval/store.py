@@ -6,10 +6,10 @@ from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 from threading import Lock
-from typing import Any, Iterator, Mapping
+from typing import Any, Iterator, Mapping, Sequence
 
 from .locking import exclusive_file_lock
-from .model import CaseResult, to_jsonable
+from .model import CaseResult, CheckResult, to_jsonable
 
 
 def _now() -> str:
@@ -183,26 +183,33 @@ class ResultStore:
         return row is not None
 
     def save_case(self, result: CaseResult) -> None:
-        payload = to_jsonable(result)
-        payload["hard_pass"] = result.hard_pass
-        payload["soft_warning_count"] = result.soft_warning_count
-        with self.lock:
-            self.connection.execute(
+        self.save_cases((result,))
+
+    def save_cases(self, results: Sequence[CaseResult]) -> None:
+        rows = []
+        for result in results:
+            payload = to_jsonable(result)
+            payload["hard_pass"] = result.hard_pass
+            payload["soft_warning_count"] = result.soft_warning_count
+            rows.append((
+                result.run_id,
+                result.case.case_id,
+                result.trace.trace_id if result.trace else None,
+                int(result.hard_pass),
+                result.soft_warning_count,
+                json.dumps(payload, ensure_ascii=False),
+            ))
+        if not rows:
+            return
+        with self.lock, self.connection:
+            self.connection.executemany(
                 """
                 INSERT OR REPLACE INTO case_results
                     (run_id, case_id, trace_id, hard_pass, soft_warning_count, result_json)
                 VALUES (?, ?, ?, ?, ?, ?)
                 """,
-                (
-                    result.run_id,
-                    result.case.case_id,
-                    result.trace.trace_id if result.trace else None,
-                    int(result.hard_pass),
-                    result.soft_warning_count,
-                    json.dumps(payload, ensure_ascii=False),
-                ),
+                rows,
             )
-            self.connection.commit()
 
     def list_results(self, run_id: str) -> list[dict[str, Any]]:
         with self.lock:
@@ -211,6 +218,36 @@ class ResultStore:
                 (run_id,),
             ).fetchall()
         return [json.loads(row["result_json"]) for row in rows]
+
+    def add_case_check(self, run_id: str, case_id: str, check: CheckResult) -> None:
+        with self.lock:
+            row = self.connection.execute(
+                "SELECT result_json FROM case_results WHERE run_id = ? AND case_id = ?",
+                (run_id, case_id),
+            ).fetchone()
+            if row is None:
+                raise ValueError(f"cannot add a check to missing result: {run_id}/{case_id}")
+            result = json.loads(row["result_json"])
+            check_payload = to_jsonable(check)
+            if check_payload in result["checks"]:
+                return
+            result["checks"].append(check_payload)
+            if check.level == "hard" and not check.passed:
+                result["hard_pass"] = False
+            elif check.level in {"soft", "candidate"} and not check.passed:
+                result["soft_warning_count"] += 1
+            self.connection.execute(
+                "UPDATE case_results SET hard_pass = ?, soft_warning_count = ?, result_json = ? "
+                "WHERE run_id = ? AND case_id = ?",
+                (
+                    int(result["hard_pass"]),
+                    result["soft_warning_count"],
+                    json.dumps(result, ensure_ascii=False),
+                    run_id,
+                    case_id,
+                ),
+            )
+            self.connection.commit()
 
     def save_review(
         self,

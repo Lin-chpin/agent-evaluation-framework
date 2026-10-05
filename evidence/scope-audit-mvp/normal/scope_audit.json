@@ -1,0 +1,80 @@
+{
+  "requirement": "Change value to return 2.",
+  "acceptance_criteria": [
+    "value() returns 2"
+  ],
+  "allowed_paths": [
+    "src/math.py"
+  ],
+  "forbidden_paths": [],
+  "diff_sha256": "f5b1ab57c6d88aeda0d35a819c03f8a5e2b80f79a5a953457747c0b2f77d6505",
+  "base_commit": "acf88caa6797a33d421badc013d87efe46c17a46",
+  "target_commit": "a611d05068f2b48019d6c8ecb133216a6bb567a3",
+  "changed_files": [
+    "src/math.py"
+  ],
+  "additions": 1,
+  "deletions": 1,
+  "findings": [
+    {
+      "path": "src/math.py",
+      "line": 2,
+      "status": "related",
+      "risk": "low",
+      "line_side": "base",
+      "reason": "Changed path is explicitly allowed by the task scope.",
+      "evidence": "-    return 1",
+      "source": "rules"
+    }
+  ],
+  "semantic_review": "not_requested",
+  "warnings": [],
+  "test_selection": {
+    "mode": "regression",
+    "suites": [
+      "regression",
+      "smoke"
+    ],
+    "rule_assessment": {
+      "mode": "regression",
+      "confidence": 1.0,
+      "risk": "medium",
+      "reasons": [
+        "General source or configuration changes need protected-case coverage."
+      ],
+      "source": "rules",
+      "input_kind": "metadata"
+    },
+    "ai_assessment": null,
+    "human_review_required": false,
+    "review_reasons": [],
+    "changed_files": 1,
+    "additions": 1,
+    "deletions": 1
+  },
+  "tests": {
+    "status": "passed",
+    "runs": [
+      {
+        "suite": "regression",
+        "status": "passed",
+        "case_count": 1,
+        "hard_failures": 0,
+        "report_path": "tests/regression/report.md"
+      },
+      {
+        "suite": "smoke",
+        "status": "passed",
+        "case_count": 1,
+        "hard_failures": 0,
+        "report_path": "tests/smoke/report.md"
+      }
+    ],
+    "selected_suites": [
+      "regression",
+      "smoke"
+    ]
+  },
+  "uncovered_risks": [],
+  "conclusion": "no_obvious_issue"
+}

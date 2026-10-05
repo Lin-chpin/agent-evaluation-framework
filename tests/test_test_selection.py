@@ -45,6 +45,10 @@ class RuleAssessmentTests(unittest.TestCase):
     def test_rag_change_uses_full(self) -> None:
         self.assertEqual(assess_rules(snapshot("src/rag/retriever.py")).mode, "full")
 
+    def test_source_filename_containing_test_does_not_use_smoke(self) -> None:
+        self.assertEqual(assess_rules(snapshot("src/agent_eval/test_selection.py")).mode, "full")
+        self.assertEqual(assess_rules(snapshot("src/contest/payments.py")).mode, "regression")
+
 
 class SelectionTests(unittest.TestCase):
     def setUp(self) -> None:
