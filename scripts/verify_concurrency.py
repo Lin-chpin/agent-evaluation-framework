@@ -117,7 +117,7 @@ def run_recovery_profile(database: Path, count: int) -> dict[str, int | str]:
     adapter, counters = build_adapter()
     cases = build_cases(count)
     with ResultStore(database) as store:
-    engine = EvaluationEngine(adapter, store, workers=8, retries=1, run_identity="synthetic-concurrency-v1")
+        engine = EvaluationEngine(adapter, store, workers=8, retries=1, run_identity="synthetic-concurrency-v1")
         engine.run_suite(cases[: count // 2], "stress", run_id="recovery")
         recovered = engine.run_suite(cases, "stress", run_id="recovery", resume=True)
         unique_cases = store.connection.execute(
