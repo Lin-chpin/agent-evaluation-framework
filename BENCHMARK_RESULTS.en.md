@@ -26,7 +26,7 @@ It performs five checks.
 
 GitHub Actions runs the same command on Windows and Linux and uploads the machine-readable JSON result.
 
-The local Python 3.13.5 result is stored in [evidence/verified-results.json](evidence/verified-results.json). The script records the timestamp, framework version, Git revision, dirty-worktree state, runtime platform, and reproduction command. The evidence file itself records the exact revision and worktree state it belongs to, so commit identifiers do not go stale in the surrounding documentation. GitHub Actions on the current `main` branch continues to run the same script on Windows and Linux and stores artifacts for the corresponding revision.
+`evidence/verified-results.json` is a historical reproduction record for commit `dda98080384ca22eb907c87cc15691c78bd3e784`, generated on 2026-09-01; it records 49 tests passing at that revision and is not the current test status. The full suite was run on the current tree with Python 3.13.5 on 2026-10-07 and passed 69/69 tests, as shown below. The JSON remains unchanged so its original revision, timestamp, and count stay intact.
 
 Each dataset has two identities. `source_file_sha256` is the byte-level hash of the original JSONL file. `normalized_case_manifest.sha256` hashes the cases after framework parsing and normalization. The values serve different purposes and are not expected to match. The first detects replacement of the input file, while the second binds resume and candidate comparison to the same normalized test content.
 
@@ -34,7 +34,7 @@ Each dataset has two identities. `source_file_sha256` is the byte-level hash of 
 
 | Evidence | Result | What it supports |
 | --- | --- | --- |
-| Automated tests | 54/54 passed | Current tests cover rules, evolution decisions, independent scenario gates, strict holdout gating, continued multi-round improvement, frozen-dataset resume checks, empty-suite and duplicate-ID rejection, append-only resume identity, budgets, LLM JSON boundaries, candidate-evidence isolation, Gold adjudication, evaluator metrics, cross-process locking, concurrent SQLite writers, multi-file operations and rollback, container security defaults, process timeouts, and output-limit termination. |
+| Automated tests (2026-10-07, Python 3.13.5) | 69/69 passed | Covers evaluation and evolution, concurrency and isolation, run recovery, all four Scope Audit finding states, multiple distinct findings per file and duplicate merging, base/target changed-line evidence validation, and Diff-driven suite selection. |
 | Deterministic text evolution | Harmful candidate rolled back; safe candidate accepted | Three-set gating blocks a candidate that damages holdout while preserving a safe improvement. |
 | Code Agent evolution | Harmful code rolled back; safe code accepted. Text-file writes, deletes, and moves were applied only in candidate directories. | Single-file and multi-file candidates enter the same loop. Path and conflict checks constrain file operations, and rollback does not overwrite the baseline. |
 | Evaluator-Skill evolution | Harmful candidate rolled back; safe candidate accepted. Improvement 0% to 100%, regression 100% to 100%, holdout 0% to 100%. | Simulated review reports can drive a controlled evaluator-Skill replay across improvement, regression, and holdout. |
