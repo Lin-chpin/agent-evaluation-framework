@@ -1,0 +1,10 @@
+{
+  "requirement": "Change value to return 2.",
+  "acceptance_criteria": [
+    "value() returns 2"
+  ],
+  "allowed_paths": [
+    "src/math.py"
+  ],
+  "forbidden_paths": []
+}

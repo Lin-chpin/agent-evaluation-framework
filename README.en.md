@@ -171,9 +171,9 @@ agent-eval select-tests --repository path/to/domain-project --ai-provider remote
 
 Local mode accepts only loopback, private-IP, or `.local` endpoints and sends the complete diff by default; add `--ai-input summary` for a stricter local option. Remote mode rejects `--ai-input raw`. Its summary contains only file counts, extensions, changed-line counts, file categories, and generic impact signals—never source text, file paths, URLs, or concrete values. See [automatic test selection](docs/test-selection.en.md) for the full boundary.
 
-## AI-assisted code change scope audit
+## AI code change scope audit
 
-`audit-scope` uses the task, acceptance criteria, and Git Diff between two commits, along with deterministic checks, optional semantic review, and relevant tests, to surface changes that deserve human attention. It collects traceable evidence to reduce the search and investigation work in code review. It assists review; it does not approve, merge, or release code.
+`audit-scope` compares two commits, reuses Diff impact rules to select suites, and runs available cases with the existing `ProjectAdapter` and evaluation engine. Check out the target commit with a clean working tree, and ensure the adapter evaluates that version. The audit never changes or rolls back the target code. Artifacts include `scope_audit.json`, `report.md`, the complete `diff.patch`, and existing suite reports. Exit codes are 0 (no obvious issue), 1 (explicit violation), and 2 (review needed or insufficient evidence). Deleted lines use base-version locations; added lines use target-version locations. [Saved MVP evidence](evidence/scope-audit-mvp/README.md).
 
 Provide a JSON task specification with `requirement`, `acceptance_criteria` (string array), and optional `allowed_paths` / `forbidden_paths` (path glob arrays). Run:
 
@@ -185,15 +185,15 @@ agent-eval audit-scope `
   --full path/to/full.jsonl --output path/to/audit-output
 ```
 
-The target repository must be checked out at the target commit with a clean working tree, and the adapter must evaluate that version.
+The output includes `scope_audit.json`, `report.md`, and the existing run reports for executed suites. Explicitly forbidden paths are clear scope violations; paths outside the allowed set and unrequested public symbols are review candidates. Missing task evidence stays inconclusive. Optional `--ai-provider local` uses the existing JSON reviewer at a private endpoint for semantic review; the MVP never sends source code to a remote model. Passing tests do not prove scope compliance. Missing cases or a checkout that is not the clean target commit are reported as untested risks.
 
-The output includes `scope_audit.json`, `report.md`, the complete `diff.patch`, test-selection details, and reports for executed suites. Findings are classified as clear violation, suspected violation, related change, or insufficient evidence. Explicitly forbidden paths are identified deterministically; ordinary path alerts and unrequested public declarations are sent for review. Optional `--ai-provider local` uses the existing JSON Judge for semantic assistance. A model finding is retained only when its file, Diff side, and line identify a real changed line. Rejected findings include a reason. Multiple independent findings in one file are preserved; exact duplicate model findings are merged.
+### Capability limits and human review
 
-Exit codes are 0 (no obvious issue), 1 (an explicit forbidden path matched), and 2 (review needed or evidence is insufficient). Deleted lines use base-version locations; added lines use target-version locations. The report records passed, failed, unexecuted, and uncovered tests. Passing tests show only that the selected cases passed; they do not prove scope compliance. Missing cases, a mismatched target checkout, or a dirty working tree are reported as untested risks.
+The current implementation retains four finding states: clear violation, suspected violation, related change, and insufficient evidence. A `forbidden_paths` match is deterministic. An ordinary change outside `allowed_paths` remains a suspected finding in the final report even when the model calls it a necessary cross-file change. Model findings must cite a real changed line in the stated file and `base`/`target` side; rejected coordinates and reasons are recorded in `model_finding_trace`. **A valid changed-line coordinate does not establish that the model's scope judgment or explanation is correct.**
 
-### Human review and capability boundaries
+Human review is part of the decision process. For exit code `2`, rule/model conflicts, insufficient evidence, or missing test coverage, examine the task and acceptance criteria, the technical need for cross-file changes, the original Diff, each finding, and the actual test results. Decide Scope separately from regression Risk. If the specification does not define an observable behavior, such as the identity of a returned list object, ask the task or interface owner to clarify the contract and keep the case unresolved. A model's `related` finding cannot automatically override an explicitly forbidden path; exit code `0` and passing tests do not prove scope compliance. `audit-scope` preserves the automated report and the retention/rejection trace of model findings; it **does not record or replace the final human decision**.
 
-Ordinary path alerts, conflicts between rules and semantic review, insufficient evidence, test failures, and coverage gaps require human review. The reviewer uses the task, acceptance criteria, Diff, finding evidence, and test results to make the final Scope decision, separately from regression Risk. The system cannot infer a behavior contract that the task did not specify; clarify the requirement before deciding. Reports and model-finding traces are auditable, but `audit-scope` does not replace or sign the final human decision. See the [Scope Audit architecture note](docs/scope-audit-architecture.md).
+Semantic arbitration of ordinary path alerts and automatic Evidence Grounding remain isolated offline design experiments outside this command. An adversarial case mapped a model's old-side description to a real added line, so uniqueness and changed-line validity alone do not establish semantic evidence. Results on small adapted samples are not production accuracy estimates. See the [Scope Audit architecture note (Chinese)](docs/scope-audit-architecture.md) for the decision flow and handoff.
 
 ## General version evolution
 

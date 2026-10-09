@@ -1,0 +1,50 @@
+{
+  "recorded_before_execution": "2026-10-04T13:55:51.706038+00:00",
+  "framework_commit": "0b80d1d9f05ae41663553a5da6c16d67f7fd6e7d",
+  "framework_dirty": true,
+  "target_commit": "b00f65f9a0cacab0a8a85019ef5a5e555a98f6aa",
+  "base_commit": "ce6ce0709990286127db20d77191832878eae9f9",
+  "target_dirty": false,
+  "runtime": "C:\\ProgramData\\anaconda3\\python.exe",
+  "python": "3.13.5",
+  "command": [
+    "C:\\ProgramData\\anaconda3\\python.exe",
+    "-m",
+    "agent_eval.cli",
+    "audit-scope",
+    "--repository",
+    "C:\\Users\\zlsss\\AppData\\Local\\Temp\\tmpcd879awf\\project",
+    "--base",
+    "ce6ce0709990286127db20d77191832878eae9f9",
+    "--target",
+    "b00f65f9a0cacab0a8a85019ef5a5e555a98f6aa",
+    "--spec",
+    "C:\\Users\\zlsss\\AppData\\Local\\Temp\\tmpcd879awf\\spec.json",
+    "--adapter",
+    "C:\\Users\\zlsss\\AppData\\Local\\Temp\\tmpcd879awf\\adapter.py",
+    "--regression",
+    "C:\\Users\\zlsss\\AppData\\Local\\Temp\\tmpcd879awf\\regression.jsonl",
+    "--smoke",
+    "C:\\Users\\zlsss\\AppData\\Local\\Temp\\tmpcd879awf\\smoke.jsonl",
+    "--db",
+    "C:\\Users\\zlsss\\AppData\\Local\\Temp\\tmpcd879awf\\evaluation.db",
+    "--output",
+    "E:\\技术博客\\Agent评测框架\\agent-evaluation-framework\\evidence\\scope-audit-mvp\\forbidden"
+  ],
+  "input_sha256": {
+    "spec.json": "4c9b5955dec0a66bb693e32a4c462e8c762e02589d2ad62636cc0047b75262a0",
+    "adapter.py": "9c762d9305878fd29ed88c4e23d0a653fb7704b528144a9c9d97f186a767daa7",
+    "regression.jsonl": "455ae7b39975bc4d5cbc47f9883ada0d50b16c0d77c9bdc2a97d818ad3c837c0",
+    "smoke.jsonl": "31fe967b20e34c4403acb7e0275bd013adaf9bd55f70e9bd80df0dd0e4dac780"
+  },
+  "target_source_sha256": {
+    "src/extra.py": "aac9c19107430bffd75b25a919b71cb0c6f66b3c9f5aca6b178383a3ef9975fb",
+    "src/math.py": "66c1f25def9d9ffab2d1f57dd46d35094e5c421880da6a4f5214fa39f2410994"
+  },
+  "model": null,
+  "provider": "none",
+  "case_counts": {
+    "regression": 1,
+    "smoke": 1
+  }
+}
