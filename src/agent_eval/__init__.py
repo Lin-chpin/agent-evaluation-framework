@@ -24,6 +24,7 @@ from .openai_trace import load_openai_traces, normalize_openai_trace
 from .openai_trace_processor import OpenAITraceProcessor, install_openai_trace_processor
 from .process import OutputLimitExceeded, run_agent_process
 from .test_selection import select_tests
+from .preset_evaluators import semantic_evaluations, tool_behavior_checks
 
 __all__ = [
     "AutoEvolutionAdapter",
@@ -54,4 +55,6 @@ __all__ = [
     "select_tests",
     "build_container_command",
     "run_agent_container",
+    "semantic_evaluations",
+    "tool_behavior_checks",
 ]

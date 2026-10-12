@@ -5,6 +5,7 @@ import hashlib
 import json
 import uuid
 from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
+from dataclasses import replace
 from pathlib import Path
 from types import ModuleType
 from typing import Any, Iterable, Mapping, Sequence
@@ -20,6 +21,7 @@ from .model import (
     to_jsonable,
 )
 from .rules import behavior_checks, consistency_checks, feedback_checks, structure_checks
+from .preset_evaluators import semantic_evaluations, tool_behavior_checks
 from .store import ResultStore
 
 
@@ -142,23 +144,44 @@ class EvaluationEngine:
             trace = traces[0]
             checks = structure_checks(case, trace, self.adapter.hard_gates, self.adapter.soft_quality)
             checks.extend(behavior_checks(case, trace))
+            checks.extend(
+                replace(check, message=f"trial {index}, trace {trial.trace_id}: {check.message}")
+                for index, trial in enumerate(traces, 1)
+                for check in tool_behavior_checks(case, trial)
+            )
             checks.extend(consistency_checks(traces, self.adapter.hard_gates + self.adapter.soft_quality))
             checks.extend(feedback_checks(trace))
             result = CaseResult(run_id, case.suite, source, case, trace, checks)
 
+            if case.metadata.get("semantic_evaluators"):
+                result.llm_review = {
+                    "semantic_evaluators": semantic_evaluations(case, trace, self.reviewer),
+                    "authoritative": False,
+                }
+            can_collect_few_shot = (
+                self.collect_few_shot and result.hard_pass and result.soft_warning_count == 0
+                and all(row["verdict"] == "PASS"
+                        for row in result.llm_review.get("semantic_evaluators", []))
+            )
             should_review = any(not check.passed for check in checks) or self.collect_few_shot
             if self.reviewer and should_review:
                 try:
-                    result.llm_review = self.reviewer.analyze(
+                    analysis = self.reviewer.analyze(
                         case,
                         traces,
                         checks,
-                        self.collect_few_shot and result.hard_pass and result.soft_warning_count == 0,
+                        can_collect_few_shot,
                     )
+                    # Preserve preset results: model-supplied keys cannot replace this evidence.
+                    result.llm_review = {
+                        **{key: value for key, value in analysis.items() if key != "semantic_evaluators"},
+                        **result.llm_review,
+                        "authoritative": False,
+                    }
                 except Exception as error:  # LLM analysis never changes evaluation truth
-                    result.llm_review = {"error": str(error), "authoritative": False}
+                    result.llm_review = {**result.llm_review, "error": str(error), "authoritative": False}
 
-            if self.collect_few_shot and result.hard_pass and result.soft_warning_count == 0:
+            if can_collect_few_shot:
                 result.few_shot_candidate = {
                     "status": "pending_human_review",
                     "source_case_id": case.case_id,

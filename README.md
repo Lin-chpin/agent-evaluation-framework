@@ -20,7 +20,7 @@
 python -m unittest discover -s tests -q
 ```
 
-当前提交预期显示 `Ran 54 tests` 和 `OK`。这条命令只验证仓库自带测试，不调用外部模型或公开榜单接口。
+当前提交预期显示 `Ran 88 tests` 和 `OK`。这条命令只验证仓库自带测试，不调用外部模型或公开榜单接口。
 
 ## 项目流程
 
@@ -124,6 +124,10 @@ Processor 只负责记录 Agent、模型和工具 span；`EvaluationEngine` 仍�
 4. **反馈层**：隐式反馈只生成候选，不自动判定 badcase。
 
 ## 安装与运行
+
+### 工具行为预置与按需语义复核
+
+Case 的 `metadata.behavior_evaluators` 可启用必需/禁止工具、调用顺序、调用次数和工具错误检查；每次重复运行分别检查，失败进入现有硬门禁。示例默认只启用工具检查，无需模型。问答或 RAG 业务可显式配置 `metadata.semantic_evaluators` 并使用 `--use-llm`，启用回答相关性、参考答案语义一致性和上下文支撑检查；结果只进入人工复核，不改变发布门禁。配置、Trace 标记约定和可运行示例见[评测器预置说明](docs/preset-evaluators.md)。
 
 业务项目接入、验收或上线时，接入方可以冻结目标版本、数据集、Gold、门禁、SLO 和回滚目标，按机制验收、系统集成、业务验收和生产验收逐步推进。
 

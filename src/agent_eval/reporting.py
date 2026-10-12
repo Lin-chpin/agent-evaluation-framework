@@ -34,6 +34,7 @@ def write_run_artifacts(summary: Mapping[str, Any], output_dir: Path) -> None:
     review_rows: list[dict[str, Any]] = []
     few_shot_rows: list[Mapping[str, Any]] = []
     failures: list[str] = []
+    semantic_advisory_cases = 0
 
     for result in summary["results"]:
         case = result["case"]
@@ -50,19 +51,23 @@ def write_run_artifacts(summary: Mapping[str, Any], output_dir: Path) -> None:
             stats["hard_passes"] += int(result["hard_pass"])
             stats["soft_warnings"] += result["soft_warning_count"]
         failed = _failed_checks(result)
-        if failed:
+        semantic_rows = result.get("llm_review", {}).get("semantic_evaluators", [])
+        semantic_flags = [row for row in semantic_rows if row.get("verdict") != "PASS"]
+        if semantic_flags:
+            semantic_advisory_cases += 1
+        if failed or semantic_flags:
             for check in failed:
                 module_counts.update(check.get("suspected_modules", []))
-            failures.append(
-                f"- `{case['case_id']}` ({case['scenario']}): "
-                + "; ".join(f"{check['layer']}/{check['name']}" for check in failed)
-            )
+            items = [f"{check['layer']}/{check['name']}" for check in failed]
+            items.extend(f"semantic/{row['name']}:{row['verdict']}" for row in semantic_flags)
+            failures.append(f"- `{case['case_id']}` ({case['scenario']}): " + "; ".join(items))
             review_rows.append(
                 {
                     "run_id": summary["run_id"],
                     "case_id": case["case_id"],
                     "auto_result": "hard_failure" if not result["hard_pass"] else "review_candidate",
                     "failed_checks": failed,
+                    "semantic_evaluators": semantic_rows,
                     "llm_review": result.get("llm_review", {}),
                     "human_decision": "",
                     "human_final_conclusion": "",
@@ -80,6 +85,7 @@ def write_run_artifacts(summary: Mapping[str, Any], output_dir: Path) -> None:
         f"- Cases: {summary['case_count']}",
         f"- Hard failures: {summary['hard_failures']}",
         f"- Soft/review warnings: {summary['soft_warnings']}",
+        f"- Semantic advisory cases: {semantic_advisory_cases}",
         "",
         "## Suspected modules",
         "",

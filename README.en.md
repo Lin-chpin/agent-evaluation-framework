@@ -18,7 +18,7 @@ The lowest-cost verification requires no API key. With Python 3.11 or newer, run
 python -m unittest discover -s tests -q
 ```
 
-The current revision is expected to print `Ran 54 tests` and `OK`. This command runs only the repository's built-in tests. It does not call an external model or public leaderboard service.
+The current revision is expected to print `Ran 88 tests` and `OK`. This command runs only the repository's built-in tests. It does not call an external model or public leaderboard service.
 
 ## Project flow
 
@@ -122,6 +122,10 @@ The Processor only records Agent, model, and tool spans. `EvaluationEngine` stil
 4. **Feedback** treats implicit signals as candidates and never labels them as bad cases automatically.
 
 ## Install and run
+
+### Tool presets and opt-in semantic review
+
+Configure `metadata.behavior_evaluators` for required/forbidden tools, tool order, call limits and tool errors. Every collected trial is checked independently as a deterministic hard gate. The example enables tool checks only and needs no model. Question-answering or RAG integrations may explicitly select `metadata.semantic_evaluators` and pass `--use-llm` for answer relevance, reference agreement and contextual support reviews. These results remain advisory and do not change release gates. See [configuration, trace conventions and the runnable example](docs/preset-evaluators.md#english).
 
 For integration, acceptance, or deployment, an integrating project can freeze the target version, datasets, Gold, gates, SLOs, and rollback target, then progress through mechanism, system-integration, business, and production acceptance.
 

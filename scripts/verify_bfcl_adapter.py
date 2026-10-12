@@ -168,7 +168,7 @@ def build_adapter(call_agent: Callable[[EvalCase, RunContext], Any]) -> ProjectA
                 TraceEvent(
                     module="BFCLAdapter",
                     action="tool_call",
-                    fields={"name": call["name"]},
+                    fields={"name": call["name"], "kind": "tool", "tool_name": call["name"]},
                 )
                 for call in calls
             ),

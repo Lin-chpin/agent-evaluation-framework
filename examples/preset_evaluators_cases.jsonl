@@ -1,0 +1,1 @@
+{"id":"PRESET-001","scenario":"tool-behavior","input":{"question":"What is the capital of France?"},"expected":{"answer":"Paris is the capital of France."},"metadata":{"behavior_evaluators":{"required_tools":["search_docs"],"forbidden_tools":["delete_records"],"tool_order":["search_docs","summarize"],"max_tool_calls":3,"no_tool_errors":true}}}
